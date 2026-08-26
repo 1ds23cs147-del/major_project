@@ -1,0 +1,7 @@
+.venv/
+artifacts/
+runs/
+*.pt
+*.onnx
+__pycache__/
+.pytest_cache/
