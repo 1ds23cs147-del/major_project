@@ -1,6 +1,6 @@
 # Forest Fire AI Pipeline
 
-This project prepares a unified detector from the available fire/smoke YOLO datasets and FLIR person annotations, then supports RGB, thermal, and video inference.
+This project trains an RGB fire/smoke detector for forest-camera alerts. It returns a binary operational decision: **FIRE ALERT** when visible fire or smoke is detected, otherwise **no alert**. The supplied data has no separate forest-scene label, so deploy it on a forest-facing camera rather than interpreting it as a forest classifier.
 
 ## Install on Windows with the RTX 2070
 
@@ -13,15 +13,17 @@ pip install -r requirements.txt
 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
 ```
 
-## Prepare and train
+## Prepare, train, and evaluate
 
 ```powershell
-python prepare_multimodal_dataset.py
-python train_detector.py --epochs 1 --batch 2 --device 0
-python train_detector.py --epochs 80 --batch 8 --device 0
+python prepare_forest_fire_dataset.py
+python train_forest_fire_detector.py --epochs 40 --batch 8 --device 0
+python evaluate_forest_fire_detector.py --device 0
 ```
 
-The unified classes are `fire`, `smoke`, `other`, and `person`. The preparation script combines both YOLO sources and converts FLIR thermal COCO person annotations to YOLO format. It writes source counts to `artifacts/unified_yolo/source_counts.json`.
+The training classes are `fire` and `smoke`. The builder excludes unrelated FLIR person labels, retains valid negative images, and removes byte-identical duplicates across splits to prevent leakage. It writes split/class counts to `artifacts/forest_fire_yolo/dataset_summary.json`.
+
+The evaluation script reports object-detection metrics (precision, recall, mAP) and binary fire-alert metrics (accuracy, precision, recall, F1, and confusion matrix) on the held-out test split.
 
 ## Video inference
 
