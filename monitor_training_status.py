@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import time
 from pathlib import Path
 
 
-def latest_results(root: Path) -> Path | None:
-    candidates = list(root.glob("runs/**/results.csv"))
-    return max(candidates, key=lambda item: item.stat().st_mtime) if candidates else None
+def latest_run(root: Path) -> Path | None:
+    candidates = list(root.glob("runs/**/args.yaml"))
+    return max(candidates, key=lambda item: item.stat().st_mtime).parent if candidates else None
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -45,20 +46,38 @@ def projection(rows: list[dict[str, str]], total_epochs: int) -> str:
     return "Trend estimate only (not a test result): " + ", ".join(estimates)
 
 
+def live_batch_status(root: Path) -> str:
+    logs = [root / "artifacts" / "forest_fire_training_30.err", root / "artifacts" / "forest_fire_training_30.log"]
+    existing = [path for path in logs if path.exists()]
+    if not existing:
+        return "No active batch progress has been logged yet."
+    text = "\n".join(path.read_text(encoding="utf-8", errors="ignore")[-10000:] for path in existing)
+    epochs = [(current, total) for current, total in re.findall(r"(\d+)/(\d+)", text) if int(total) <= 100]
+    percentages = re.findall(r"(\d+)%", text)
+    if not epochs:
+        return "Preparing dataset or model..."
+    epoch, total = epochs[-1]
+    percentage = percentages[-1] if percentages else "0"
+    return f"Current batch: epoch {epoch}/{total}, approximately {percentage}% complete."
+
+
 def render(root: Path) -> None:
-    results = latest_results(root)
-    if results is None:
-        print("Waiting for a training results.csv file...")
+    run_dir = latest_run(root)
+    if run_dir is None:
+        print("Waiting for a training run folder...")
         return
-    rows = read_rows(results)
+    results = run_dir / "results.csv"
+    rows = read_rows(results) if results.exists() else []
     if not rows:
-        print(f"Waiting for first completed epoch: {results}")
+        print("Forest-fire training status")
+        print(f"Run: {run_dir.relative_to(root)}")
+        print(live_batch_status(root))
         return
     row = rows[-1]
-    epochs = get_epochs(results.parent)
+    epochs = get_epochs(run_dir)
     completed = int(float(row["epoch"]))
     print("Forest-fire training status")
-    print(f"Run: {results.parent.relative_to(root)}")
+    print(f"Run: {run_dir.relative_to(root)}")
     print(f"Completed: {completed}/{epochs} epochs ({completed / epochs:.0%})")
     print(f"Precision: {metric(row, 'metrics/precision(B)'):.1%} | Recall: {metric(row, 'metrics/recall(B)'):.1%}")
     print(f"mAP@50: {metric(row, 'metrics/mAP50(B)'):.1%} | mAP@50-95: {metric(row, 'metrics/mAP50-95(B)'):.1%}")

@@ -5,3 +5,6 @@ runs/
 *.onnx
 __pycache__/
 .pytest_cache/
+
+# Large local source datasets are not versioned with the application code.
+original datasets/
