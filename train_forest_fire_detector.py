@@ -14,8 +14,14 @@ def main() -> None:
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--device", default="0")
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--resume", type=Path, help="Resume an interrupted run from its last.pt checkpoint.")
     args = parser.parse_args()
     project_dir = Path(__file__).resolve().parent / "runs" / "forest_fire"
+    if args.resume:
+        if not args.resume.is_file():
+            raise SystemExit(f"Checkpoint not found: {args.resume}")
+        YOLO(str(args.resume)).train(resume=True)
+        return
     YOLO(args.weights).train(data=str(args.data.resolve()), epochs=args.epochs, imgsz=args.imgsz, batch=args.batch, device=args.device, workers=args.workers, project=str(project_dir), name="fire_smoke", exist_ok=True, pretrained=True, patience=12, seed=42)
 
 

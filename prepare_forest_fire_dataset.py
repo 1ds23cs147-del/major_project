@@ -53,9 +53,11 @@ def main() -> None:
 
     # Test/validation are processed first: duplicate frames can never enter train.
     sources = {
-        "test": [(root / "data", "test", {0: 1, 1: 0}, "dfire"), (root, "test", {0: 0, 1: 2, 2: 1}, "roboflow")],
-        "val": [(root / "data", "val", {0: 1, 1: 0}, "dfire"), (root, "valid", {0: 0, 1: 2, 2: 1}, "roboflow")],
-        "train": [(root / "data", "train", {0: 1, 1: 0}, "dfire"), (root, "train", {0: 0, 1: 2, 2: 1}, "roboflow")],
+        # Roboflow source: 0=fire, 1=other, 2=smoke.  This detector has
+        # only fire/smoke classes, so `other` is deliberately discarded.
+        "test": [(root / "data", "test", {0: 1, 1: 0}, "dfire"), (root, "test", {0: 0, 2: 1}, "roboflow")],
+        "val": [(root / "data", "val", {0: 1, 1: 0}, "dfire"), (root, "valid", {0: 0, 2: 1}, "roboflow")],
+        "train": [(root / "data", "train", {0: 1, 1: 0}, "dfire"), (root, "train", {0: 0, 2: 1}, "roboflow")],
     }
     seen, summary = set(), {}
     for split, split_sources in sources.items():
