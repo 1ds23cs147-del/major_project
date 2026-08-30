@@ -60,7 +60,7 @@ async function pollLiveStatus() {
     const res = await fetch("/api/live/status");
     const data = await res.json();
 
-    $("cameraStatus").textContent = data.available ? "Online" : "Offline";
+    $("cameraStatus").textContent = data.available ? "Online" : "Not configured";
     $("cameraStatus").style.color = data.available ? "var(--success)" : "var(--danger)";
 
     if (data.available) {

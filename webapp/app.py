@@ -50,7 +50,7 @@ app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB
 # ---------------------------------------------------------------------------
 _camera = None
 _camera_lock = None
-_camera_source = 0  # default webcam index; can be an RTSP/IP URL
+_camera_source = None  # no camera by default; set via /api/camera/source
 
 # Live-fire confirmation state: when the live feed crosses the alert
 # threshold we capture a snapshot and wait for the user to confirm.
@@ -66,8 +66,14 @@ _live_state_lock = __import__("threading").Lock()
 
 
 def _get_camera():
-    """Lazily open the camera and return a thread-safe handle."""
+    """Lazily open the camera and return a thread-safe handle.
+
+    Returns (None, None) when no camera source has been configured, so the
+    laptop webcam is never opened unless the user explicitly sets a source.
+    """
     global _camera, _camera_lock
+    if _camera_source is None:
+        return None, None
     if _camera is None:
         _camera = cv2.VideoCapture(_camera_source)
         _camera_lock = __import__("threading").Lock()
@@ -76,8 +82,10 @@ def _get_camera():
 
 def _read_frame():
     """Read a single frame from the camera, or None if unavailable."""
+    cam, lock = _get_camera()
+    if cam is None:
+        return None
     try:
-        cam, lock = _get_camera()
         with lock:
             ok, frame = cam.read()
         return frame if ok else None
@@ -165,10 +173,12 @@ def live_feed():
         while True:
             frame = _read_frame()
             if frame is None:
-                # Send a placeholder frame when the camera is unavailable.
+                # Send a placeholder frame when no camera is configured.
                 placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.putText(placeholder, "Camera unavailable", (120, 240),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.putText(placeholder, "No camera configured", (120, 220),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.putText(placeholder, "Set a source in Camera Source", (95, 260),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2, cv2.LINE_AA)
                 yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                        + _encode_jpeg(placeholder) + b"\r\n")
                 time.sleep(0.5)
