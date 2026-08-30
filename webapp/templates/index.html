@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentinelFire — Multimodal Forest Fire & Wildlife Alert System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+  <div class="bg-grid"></div>
+
+  <!-- Top navigation -->
+  <header class="navbar glass">
+    <div class="nav-brand">
+      <div class="brand-icon">🔥</div>
+      <div>
+        <div class="brand-name">SentinelFire</div>
+        <div class="brand-sub">Multimodal Forest Fire &amp; Wildlife Alert</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="#live" class="nav-link active">Live Monitor</a>
+      <a href="#upload" class="nav-link">Scene Analysis</a>
+      <a href="#alerts" class="nav-link">Alert Center</a>
+    </nav>
+    <div class="nav-status">
+      <span class="status-dot" id="navStatusDot"></span>
+      <span id="navStatusText">System Online</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Protecting Forests &amp; Wildlife</h1>
+        <p>
+          Multi-sensor fire detection that fuses <strong>RGB</strong>, <strong>Thermal</strong> and
+          <strong>NIR</strong> imagery to eliminate false alerts — and keeps watch over
+          endangered animals in the danger zone.
+        </p>
+        <div class="hero-badges">
+          <span class="badge"><span class="badge-dot rgb"></span>RGB</span>
+          <span class="badge"><span class="badge-dot thermal"></span>Thermal</span>
+          <span class="badge"><span class="badge-dot nir"></span>NIR</span>
+          <span class="badge"><span class="badge-dot animal"></span>Wildlife</span>
+        </div>
+      </div>
+      <div class="hero-stats glass">
+        <div class="stat">
+          <div class="stat-value" id="statAccuracy">92.2%</div>
+          <div class="stat-label">Alert Accuracy</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="statModalities">2/3</div>
+          <div class="stat-label">Modalities for SOS</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="statLatency">~7ms</div>
+          <div class="stat-label">Inference / frame</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live monitor -->
+    <section id="live" class="section">
+      <div class="section-head">
+        <h2>Live Camera Monitor</h2>
+        <p>Real-time RGB feed with fire/smoke detection overlay</p>
+      </div>
+      <div class="live-grid">
+        <div class="live-video glass">
+          <div class="video-header">
+            <span class="live-indicator"><span class="pulse-dot"></span> LIVE</span>
+            <span class="video-title">Forest Camera — RGB</span>
+          </div>
+          <div class="video-frame">
+            <img id="liveFeed" src="/api/live/feed" alt="Live camera feed" />
+            <div class="video-overlay" id="videoOverlay">
+              <div class="overlay-status" id="overlayStatus">Monitoring</div>
+            </div>
+          </div>
+          <div class="video-footer">
+            <div class="metric-chip">
+              <span class="chip-label">Fire Score</span>
+              <span class="chip-value" id="liveFireScore">0.00</span>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-label">Detections</span>
+              <span class="chip-value" id="liveDetections">0</span>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-label">Wildlife</span>
+              <span class="chip-value" id="liveAnimals">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="live-side glass">
+          <h3>Live Status</h3>
+          <div class="status-list">
+            <div class="status-item">
+              <span class="status-item-label">Camera</span>
+              <span class="status-item-value" id="cameraStatus">Connecting…</span>
+            </div>
+            <div class="status-item">
+              <span class="status-item-label">Fire Alert</span>
+              <span class="status-item-value" id="fireAlertStatus">—</span>
+            </div>
+            <div class="status-item">
+              <span class="status-item-label">Wildlife</span>
+              <span class="status-item-value" id="wildlifeStatus">—</span>
+            </div>
+            <div class="status-item">
+              <span class="status-item-label">Last Update</span>
+              <span class="status-item-value" id="lastUpdate">—</span>
+            </div>
+          </div>
+          <div class="alert-banner" id="liveAlertBanner" hidden>
+            <div class="alert-icon">🚨</div>
+            <div>
+              <div class="alert-title">FIRE DETECTED</div>
+              <div class="alert-sub">Immediate attention required</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload / scene analysis -->
+    <section id="upload" class="section">
+      <div class="section-head">
+        <h2>Multimodal Scene Analysis</h2>
+        <p>Upload at least 2 of 3 aligned views (RGB, Thermal, NIR) of the same scene to confirm a fire alert</p>
+      </div>
+
+      <div class="upload-grid">
+        <div class="upload-card glass" data-modality="rgb">
+          <div class="upload-card-head">
+            <span class="modality-icon rgb">📷</span>
+            <span class="modality-name">RGB</span>
+            <span class="modality-status" id="rgbStatus">Not uploaded</span>
+          </div>
+          <div class="upload-dropzone" id="dropzone-rgb">
+            <input type="file" id="file-rgb" accept="image/*" hidden />
+            <div class="dropzone-content">
+              <div class="dropzone-icon">🖼️</div>
+              <div class="dropzone-text">Drop RGB image or click to browse</div>
+              <div class="dropzone-hint">JPG, PNG, TIFF, WebP…</div>
+            </div>
+          </div>
+          <div class="upload-preview" id="preview-rgb" hidden>
+            <img id="previewImg-rgb" alt="RGB preview" />
+            <div class="preview-result" id="result-rgb">—</div>
+          </div>
+        </div>
+
+        <div class="upload-card glass" data-modality="thermal">
+          <div class="upload-card-head">
+            <span class="modality-icon thermal">🌡️</span>
+            <span class="modality-name">Thermal / IR</span>
+            <span class="modality-status" id="thermalStatus">Not uploaded</span>
+          </div>
+          <div class="upload-dropzone" id="dropzone-thermal">
+            <input type="file" id="file-thermal" accept="image/*" hidden />
+            <div class="dropzone-content">
+              <div class="dropzone-icon">🌡️</div>
+              <div class="dropzone-text">Drop thermal image or click to browse</div>
+              <div class="dropzone-hint">8-bit or 16-bit TIFF supported</div>
+            </div>
+          </div>
+          <div class="upload-preview" id="preview-thermal" hidden>
+            <img id="previewImg-thermal" alt="Thermal preview" />
+            <div class="preview-result" id="result-thermal">—</div>
+          </div>
+        </div>
+
+        <div class="upload-card glass" data-modality="nir">
+          <div class="upload-card-head">
+            <span class="modality-icon nir">🌌</span>
+            <span class="modality-name">NIR</span>
+            <span class="modality-status" id="nirStatus">Not uploaded</span>
+          </div>
+          <div class="upload-dropzone" id="dropzone-nir">
+            <input type="file" id="file-nir" accept="image/*" hidden />
+            <div class="dropzone-content">
+              <div class="dropzone-icon">🌌</div>
+              <div class="dropzone-text">Drop NIR image or click to browse</div>
+              <div class="dropzone-hint">Near-infrared capture</div>
+            </div>
+          </div>
+          <div class="upload-preview" id="preview-nir" hidden>
+            <img id="previewImg-nir" alt="NIR preview" />
+            <div class="preview-result" id="result-nir">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analyze-bar glass">
+        <div class="analyze-info">
+          <span class="analyze-count" id="uploadCount">0 / 3</span>
+          <span class="analyze-hint">modalities uploaded — need at least 2 to confirm</span>
+        </div>
+        <button class="btn btn-primary" id="analyzeBtn" disabled>
+          <span class="btn-icon">🔬</span> Analyze Scene
+        </button>
+      </div>
+
+      <!-- Decision panel -->
+      <div class="decision-panel glass" id="decisionPanel" hidden>
+        <div class="decision-head">
+          <div class="decision-icon" id="decisionIcon">✅</div>
+          <div>
+            <div class="decision-title" id="decisionTitle">Analysis Complete</div>
+            <div class="decision-sub" id="decisionSub">—</div>
+          </div>
+        </div>
+        <div class="decision-body">
+          <div class="decision-metrics">
+            <div class="decision-metric">
+              <span class="dm-label">Fused Score</span>
+              <span class="dm-value" id="fusedScore">0.00</span>
+            </div>
+            <div class="decision-metric">
+              <span class="dm-label">Modalities Checked</span>
+              <span class="dm-value" id="modalitiesChecked">—</span>
+            </div>
+            <div class="decision-metric">
+              <span class="dm-label">Modalities Confirmed</span>
+              <span class="dm-value" id="modalitiesConfirmed">—</span>
+            </div>
+          </div>
+          <div class="decision-detail" id="decisionDetail">—</div>
+          <div class="decision-actions">
+            <button class="btn btn-danger" id="sosBtn" disabled>
+              <span class="btn-icon">🆘</span> Send SOS Alert
+            </button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alert center -->
+    <section id="alerts" class="section">
+      <div class="section-head">
+        <h2>Alert Center</h2>
+        <p>Recent fire and wildlife alerts</p>
+      </div>
+      <div class="alerts-panel glass">
+        <div class="alerts-empty" id="alertsEmpty">
+          <div class="empty-icon">🛡️</div>
+          <div class="empty-text">No alerts yet. The system is monitoring.</div>
+        </div>
+        <div class="alerts-list" id="alertsList"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>SentinelFire — Multimodal Forest Fire &amp; Wildlife Alert System</span>
+      <span class="footer-note">SOS alerts require confirmation from at least 2 of 3 sensor modalities</span>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

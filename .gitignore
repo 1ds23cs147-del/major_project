@@ -8,3 +8,6 @@ __pycache__/
 
 # Large local source datasets are not versioned with the application code.
 original datasets/
+
+# Uploaded scene captures are runtime data, not source code.
+webapp/uploads/

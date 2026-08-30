@@ -93,9 +93,12 @@ def full_mode(args: argparse.Namespace) -> dict:
         )
 
     # Ground-truth labels: 1 if a label file exists and is non-empty, else 0.
+    # Supported image formats include common raster formats plus thermal/NIR-capable
+    # formats such as TIFF (16-bit thermal) and WebP.
+    image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp", ".jfif", ".pnm", ".ppm", ".pgm", ".pbm"}
     actual: list[int] = []
     for image in sorted(image_dir.iterdir()):
-        if not image.is_file() or image.suffix.lower() not in {".jpg", ".jpeg", ".png", ".bmp"}:
+        if not image.is_file() or image.suffix.lower() not in image_extensions:
             continue
         label = label_dir / f"{image.stem}.txt"
         actual.append(int(label.exists() and bool(label.read_text(encoding="utf-8").strip())))
