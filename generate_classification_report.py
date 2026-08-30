@@ -104,9 +104,13 @@ def full_mode(args: argparse.Namespace) -> dict:
     predicted: list[int] = []
     scores: list[float] = []
     for result in model.predict(source=str(image_dir), conf=args.conf, device=args.device, verbose=False, stream=True):
-        boxes = result.boxes
-        predicted.append(int(len(boxes) > 0))
-        scores.append(float(boxes.conf.max().item()) if len(boxes) > 0 else 0.0)
+        boxes = getattr(result, "boxes", None)
+        if boxes is None or len(boxes) == 0:
+            predicted.append(0)
+            scores.append(0.0)
+            continue
+        predicted.append(1)
+        scores.append(float(boxes.conf.max().item()))
 
     if len(actual) != len(predicted):
         raise RuntimeError(
