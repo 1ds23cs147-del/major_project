@@ -1,4 +1,4 @@
-"""Multimodal forest-fire and endangered-animal detection engine.
+"""Multimodal forest-fire detection engine.
 
 Loads the trained YOLO fire/smoke detector and provides modality-aware inference
 for RGB, thermal/IR, and NIR images. A fusion service combines the per-modality
@@ -11,8 +11,6 @@ Design notes
   as a base, and their scores are calibrated with modality-specific thresholds.
 - A dedicated thermal/NIR model can be dropped in later by pointing
   ``THERMAL_WEIGHTS`` / ``NIR_WEIGHTS`` at the trained checkpoints.
-- Endangered-animal detection is reported as a co-occurrence signal. A dedicated
-  animal model can be supplied via ``ANIMAL_WEIGHTS``.
 """
 
 from __future__ import annotations
@@ -34,7 +32,6 @@ RGB_WEIGHTS = BASE_DIR / "runs" / "forest_fire" / "fire_smoke" / "weights" / "be
 # Optional dedicated models (set to None to fall back to the RGB model).
 THERMAL_WEIGHTS: Optional[Path] = None
 NIR_WEIGHTS: Optional[Path] = None
-ANIMAL_WEIGHTS: Optional[Path] = None
 
 # Modality-specific confirmation thresholds (tune on validation data).
 RGB_REVIEW_THRESHOLD = 0.40
@@ -42,63 +39,15 @@ THERMAL_CONFIRM_THRESHOLD = 0.50
 NIR_CONFIRM_THRESHOLD = 0.50
 SOS_THRESHOLD = 0.75
 
+# Live-feed alert threshold. Higher than the review threshold so a single
+# frame with a weak detection does not raise an alert (reduces false alarms).
+LIVE_FIRE_THRESHOLD = 0.60
+
 # Fusion weights (calibrate on a held-out multimodal validation set).
 FUSION_WEIGHTS = {"rgb": 0.40, "thermal": 0.40, "nir": 0.20}
 
 # Minimum number of modalities that must agree before an SOS alert is allowed.
 MIN_MODALITIES_FOR_SOS = 2
-
-# Endangered animal classes (COCO-style ids mapped to names). A dedicated model
-# can replace this mapping.
-ANIMAL_CLASSES = {
-    14: "bird",
-    15: "cat",
-    16: "dog",
-    17: "horse",
-    18: "sheep",
-    19: "cow",
-    20: "elephant",
-    21: "bear",
-    22: "zebra",
-    23: "giraffe",
-    24: "deer",
-    25: "fox",
-    26: "wolf",
-    27: "rabbit",
-    28: "squirrel",
-    29: "raccoon",
-    30: "moose",
-    31: "elk",
-    32: "bison",
-    33: "mountain goat",
-    34: "mountain lion",
-    35: "wild boar",
-    36: "coyote",
-    37: "bobcat",
-    38: "lynx",
-    39: "puma",
-    40: "panther",
-    41: "jaguar",
-    42: "leopard",
-    43: "tiger",
-    44: "lion",
-    45: "monkey",
-    46: "gorilla",
-    47: "chimpanzee",
-    48: "orangutan",
-    49: "panda",
-    50: "koala",
-    51: "kangaroo",
-    52: "wallaby",
-    53: "platypus",
-    54: "echidna",
-    55: "wombat",
-    56: "tasmanian devil",
-    57: "quokka",
-    58: "bandicoot",
-    59: "bilby",
-    60: "numbat",
-}
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -121,8 +70,6 @@ class ModalityResult:
     fire_score: float  # max confidence of fire/smoke detections
     fire_detected: bool
     detections: list = field(default_factory=list)
-    animal_detected: bool = False
-    animal_labels: list = field(default_factory=list)
     annotated: Optional[np.ndarray] = None
 
 
@@ -136,7 +83,6 @@ class FusedDecision:
     modalities_confirmed: list
     sos_allowed: bool
     message: str
-    animal_alerts: list = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -151,7 +97,6 @@ class MultimodalDetector:
         self.rgb_model = self._load(RGB_WEIGHTS)
         self.thermal_model = self._load(THERMAL_WEIGHTS) if THERMAL_WEIGHTS else self.rgb_model
         self.nir_model = self._load(NIR_WEIGHTS) if NIR_WEIGHTS else self.rgb_model
-        self.animal_model = self._load(ANIMAL_WEIGHTS) if ANIMAL_WEIGHTS else None
 
     @staticmethod
     def _resolve_device(device: Optional[str]) -> str:
@@ -216,8 +161,6 @@ class MultimodalDetector:
         detections: list[Detection] = []
         fire_score = 0.0
         fire_detected = False
-        animal_detected = False
-        animal_labels: list[str] = []
 
         boxes = getattr(result, "boxes", None)
         names = getattr(result, "names", {})
@@ -231,9 +174,6 @@ class MultimodalDetector:
                 if label.lower() in {"fire", "smoke"}:
                     fire_score = max(fire_score, conf_val)
                     fire_detected = True
-                if label.lower() in {v.lower() for v in ANIMAL_CLASSES.values()}:
-                    animal_detected = True
-                    animal_labels.append(label)
 
         plot = getattr(result, "plot", None)
         annotated = plot() if boxes is not None and len(boxes) > 0 and plot is not None else image.copy()
@@ -242,8 +182,6 @@ class MultimodalDetector:
             fire_score=fire_score,
             fire_detected=fire_detected,
             detections=detections,
-            animal_detected=animal_detected,
-            animal_labels=animal_labels,
             annotated=annotated,
         )
 
@@ -286,11 +224,6 @@ class MultimodalDetector:
             status = "no_fire"
             message = f"No fire detected across {len(checked)} modality/ies (fused score {fused:.2f})."
 
-        animal_alerts = []
-        for m in checked:
-            if results[m].animal_detected:
-                animal_alerts.extend(results[m].animal_labels)
-
         return FusedDecision(
             status=status,
             fused_score=fused,
@@ -298,7 +231,6 @@ class MultimodalDetector:
             modalities_confirmed=confirmed,
             sos_allowed=sos_allowed,
             message=message,
-            animal_alerts=list(dict.fromkeys(animal_alerts)),
         )
 
 

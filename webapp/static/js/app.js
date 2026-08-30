@@ -11,6 +11,7 @@ const state = {
   captureId: null,
   decision: null,       // last fused decision
   alerts: [],
+  snapshot: null,       // { id, url, score }
 };
 
 const $ = (id) => document.getElementById(id);
@@ -41,7 +42,7 @@ function renderAlerts() {
     .map(
       (a) => `
       <div class="alert-item ${a.type}">
-        <div class="alert-item-icon">${a.type === "fire" ? "🔥" : "🦌"}</div>
+        <div class="alert-item-icon">${a.type === "fire" ? "🔥" : "ℹ️"}</div>
         <div class="alert-item-body">
           <div class="alert-item-title">${a.title}</div>
           <div class="alert-item-sub">${a.sub}</div>
@@ -67,10 +68,6 @@ async function pollLiveStatus() {
       $("fireAlertStatus").style.color = data.fire_detected ? "var(--danger)" : "var(--success)";
       $("liveFireScore").textContent = data.fire_score.toFixed(2);
       $("liveDetections").textContent = data.detections.length;
-      $("liveAnimals").textContent =
-        data.animal_detected ? data.animal_labels.join(", ") : "—";
-      $("wildlifeStatus").textContent =
-        data.animal_detected ? data.animal_labels.join(", ") : "None";
       $("lastUpdate").textContent = formatTime(Date.now() / 1000);
 
       const overlay = $("overlayStatus");
@@ -84,10 +81,49 @@ async function pollLiveStatus() {
         overlay.classList.remove("alert");
         banner.hidden = true;
       }
+
+      // Snapshot confirmation flow
+      if (data.alert_active && data.snapshot_url) {
+        if (!state.snapshot || state.snapshot.id !== data.snapshot_id) {
+          state.snapshot = {
+            id: data.snapshot_id,
+            url: data.snapshot_url,
+            score: data.fire_score,
+          };
+          $("snapshotImg").src = data.snapshot_url;
+          $("snapshotScore").textContent = `Fire score: ${data.fire_score.toFixed(2)}`;
+          $("snapshotPanel").hidden = false;
+        }
+      } else if (!data.alert_active) {
+        state.snapshot = null;
+        $("snapshotPanel").hidden = true;
+      }
     }
   } catch (err) {
     $("cameraStatus").textContent = "Unavailable";
     $("cameraStatus").style.color = "var(--danger)";
+  }
+}
+
+/* ---------------- Camera source ---------------- */
+
+async function applyCameraSource() {
+  const input = $("cameraSourceInput");
+  const source = input.value.trim();
+  if (!source) return;
+  try {
+    const res = await fetch("/api/camera/source", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to switch camera");
+    addAlert("info", "Camera switched", `Source: ${source}`);
+    // Force the feed to reload with the new source.
+    $("liveFeed").src = "/api/live/feed?t=" + Date.now();
+  } catch (err) {
+    addAlert("info", "Camera error", err.message);
   }
 }
 
@@ -193,7 +229,7 @@ function renderDecision(data) {
   const panel = $("decisionPanel");
   panel.hidden = false;
 
-  const isAlert = d.status === "FIRE_CONFIRMED";
+  const isAlert = d.status === "confirmed_fire";
   panel.classList.toggle("alert", isAlert);
 
   $("decisionIcon").textContent = isAlert ? "🚨" : "✅";
@@ -203,20 +239,13 @@ function renderDecision(data) {
   $("modalitiesChecked").textContent = d.modalities_checked.join(", ").toUpperCase();
   $("modalitiesConfirmed").textContent = d.modalities_confirmed.length;
 
-  const detailParts = [];
-  if (d.animal_alerts && d.animal_alerts.length) {
-    detailParts.push(`🦌 Endangered wildlife detected: ${d.animal_alerts.join(", ")}`);
-  }
-  detailParts.push(`SOS allowed: ${d.sos_allowed ? "YES" : "NO"} (requires ≥ 2 confirming modalities)`);
-  $("decisionDetail").textContent = detailParts.join(" · ");
+  $("decisionDetail").textContent =
+    `SOS allowed: ${d.sos_allowed ? "YES" : "NO"} (requires ≥ 2 confirming modalities)`;
 
   $("sosBtn").disabled = !d.sos_allowed;
 
   if (isAlert) {
     addAlert("fire", "FIRE CONFIRMED", `Fused score ${d.fused_score.toFixed(2)} · ${d.modalities_confirmed.length}/3 modalities`);
-  }
-  if (d.animal_alerts && d.animal_alerts.length) {
-    addAlert("info", "Wildlife Alert", `Endangered animals near fire: ${d.animal_alerts.join(", ")}`);
   }
 }
 
@@ -262,6 +291,43 @@ function resetScene() {
   updateAnalyzeBar();
 }
 
+/* ---------------- Snapshot confirmation ---------------- */
+
+async function confirmSnapshot() {
+  if (!state.snapshot) return;
+  const btn = $("confirmBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-icon">⏳</span> Dispatching…';
+  try {
+    const res = await fetch("/api/live/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ snapshot_id: state.snapshot.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Dispatch failed");
+    addAlert("fire", "RESCUE TEAM DISPATCHED", `Snapshot ${state.snapshot.id} · ${formatTime(Date.now() / 1000)}`);
+    $("snapshotPanel").hidden = true;
+    state.snapshot = null;
+  } catch (err) {
+    addAlert("info", "Dispatch error", err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">🚨</span> Confirm — Dispatch Rescue Team';
+  }
+}
+
+async function dismissSnapshot() {
+  try {
+    await fetch("/api/live/dismiss", { method: "POST" });
+    $("snapshotPanel").hidden = true;
+    state.snapshot = null;
+    addAlert("info", "Alert dismissed", "Marked as false alarm.");
+  } catch (err) {
+    addAlert("info", "Dismiss error", err.message);
+  }
+}
+
 /* ---------------- Init ---------------- */
 
 function init() {
@@ -269,6 +335,17 @@ function init() {
   $("analyzeBtn").addEventListener("click", analyzeScene);
   $("sosBtn").addEventListener("click", sendSos);
   $("resetBtn").addEventListener("click", resetScene);
+  $("cameraSourceBtn").addEventListener("click", applyCameraSource);
+  $("confirmBtn").addEventListener("click", confirmSnapshot);
+  $("dismissBtn").addEventListener("click", dismissSnapshot);
+
+  // Camera source presets
+  document.querySelectorAll(".chip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      $("cameraSourceInput").value = btn.dataset.source;
+      applyCameraSource();
+    });
+  });
 
   // Scroll-spy for nav links
   const links = document.querySelectorAll(".nav-link");

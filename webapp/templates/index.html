@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SentinelFire — Multimodal Forest Fire & Wildlife Alert System</title>
+  <title>SentinelFire — Forest Fire Detection &amp; Alert System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -22,7 +22,7 @@
       <div class="brand-icon">🔥</div>
       <div>
         <div class="brand-name">SentinelFire</div>
-        <div class="brand-sub">Multimodal Forest Fire &amp; Wildlife Alert</div>
+        <div class="brand-sub">Forest Fire Detection &amp; Alert</div>
       </div>
     </div>
     <nav class="nav-links">
@@ -40,17 +40,16 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero-text">
-        <h1>Protecting Forests &amp; Wildlife</h1>
+        <h1>Early Forest Fire Detection</h1>
         <p>
           Multi-sensor fire detection that fuses <strong>RGB</strong>, <strong>Thermal</strong> and
-          <strong>NIR</strong> imagery to eliminate false alerts — and keeps watch over
-          endangered animals in the danger zone.
+          <strong>NIR</strong> imagery to eliminate false alerts — with operator confirmation
+          before the rescue team is dispatched.
         </p>
         <div class="hero-badges">
           <span class="badge"><span class="badge-dot rgb"></span>RGB</span>
           <span class="badge"><span class="badge-dot thermal"></span>Thermal</span>
           <span class="badge"><span class="badge-dot nir"></span>NIR</span>
-          <span class="badge"><span class="badge-dot animal"></span>Wildlife</span>
         </div>
       </div>
       <div class="hero-stats glass">
@@ -96,10 +95,6 @@
               <span class="chip-label">Detections</span>
               <span class="chip-value" id="liveDetections">0</span>
             </div>
-            <div class="metric-chip">
-              <span class="chip-label">Wildlife</span>
-              <span class="chip-value" id="liveAnimals">—</span>
-            </div>
           </div>
         </div>
         <div class="live-side glass">
@@ -114,20 +109,61 @@
               <span class="status-item-value" id="fireAlertStatus">—</span>
             </div>
             <div class="status-item">
-              <span class="status-item-label">Wildlife</span>
-              <span class="status-item-value" id="wildlifeStatus">—</span>
-            </div>
-            <div class="status-item">
               <span class="status-item-label">Last Update</span>
               <span class="status-item-value" id="lastUpdate">—</span>
             </div>
           </div>
+
+          <!-- Camera source config -->
+          <div class="camera-config">
+            <h4>Camera Source</h4>
+            <p class="config-hint">
+              Use your laptop webcam (0), or connect a mobile camera via an IP/RTSP
+              stream from apps like <strong>IP Webcam</strong> or <strong>DroidCam</strong>.
+            </p>
+            <div class="config-row">
+              <input type="text" id="cameraSourceInput" placeholder="0, or http://192.168.x.x:8080/video" />
+              <button class="btn btn-small" id="cameraSourceBtn">Apply</button>
+            </div>
+            <div class="config-presets">
+              <button class="chip-btn" data-source="0">Webcam</button>
+              <button class="chip-btn" data-source="1">Cam 1</button>
+              <button class="chip-btn" data-source="2">Cam 2</button>
+            </div>
+          </div>
+
           <div class="alert-banner" id="liveAlertBanner" hidden>
             <div class="alert-icon">🚨</div>
             <div>
               <div class="alert-title">FIRE DETECTED</div>
               <div class="alert-sub">Immediate attention required</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Snapshot confirmation panel -->
+      <div class="snapshot-panel glass" id="snapshotPanel" hidden>
+        <div class="snapshot-head">
+          <div class="snapshot-icon">📸</div>
+          <div>
+            <div class="snapshot-title">Fire Detected — Confirm Before Dispatch</div>
+            <div class="snapshot-sub">
+              A snapshot was captured from the live feed. Review it and confirm
+              before the rescue team is dispatched.
+            </div>
+          </div>
+        </div>
+        <div class="snapshot-body">
+          <div class="snapshot-image-wrap">
+            <img id="snapshotImg" alt="Fire snapshot" />
+            <div class="snapshot-score" id="snapshotScore">—</div>
+          </div>
+          <div class="snapshot-actions">
+            <button class="btn btn-danger" id="confirmBtn">
+              <span class="btn-icon">🚨</span> Confirm — Dispatch Rescue Team
+            </button>
+            <button class="btn btn-ghost" id="dismissBtn">Dismiss (False Alarm)</button>
           </div>
         </div>
       </div>
@@ -251,7 +287,7 @@
     <section id="alerts" class="section">
       <div class="section-head">
         <h2>Alert Center</h2>
-        <p>Recent fire and wildlife alerts</p>
+        <p>Recent fire alerts</p>
       </div>
       <div class="alerts-panel glass">
         <div class="alerts-empty" id="alertsEmpty">
@@ -265,7 +301,7 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <span>SentinelFire — Multimodal Forest Fire &amp; Wildlife Alert System</span>
+      <span>SentinelFire — Forest Fire Detection &amp; Alert System</span>
       <span class="footer-note">SOS alerts require confirmation from at least 2 of 3 sensor modalities</span>
     </div>
   </footer>

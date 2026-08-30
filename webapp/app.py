@@ -1,10 +1,11 @@
-"""Multimodal Forest-Fire & Endangered-Animal Web Application.
+"""Multimodal Forest-Fire Web Application.
 
 A Flask server that:
   - streams a live camera feed (RGB only) with real-time fire/smoke detection,
   - accepts RGB / thermal / NIR uploads of the same scene and fuses them,
   - only allows an SOS alert when at least 2 of 3 modalities confirm fire,
-  - reports endangered-animal co-occurrence.
+  - captures a snapshot when fire is detected on the live feed and asks the
+    user to confirm before dispatching the rescue team.
 
 Run:
     .\\.venv\\Scripts\\python.exe webapp\\app.py
@@ -25,13 +26,16 @@ from werkzeug.utils import secure_filename
 
 from multimodal_detector import (
     FusedDecision,
+    LIVE_FIRE_THRESHOLD,
     ModalityResult,
     get_detector,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
+SNAPSHOT_DIR = BASE_DIR / "snapshots"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {
     ".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp",
@@ -47,6 +51,18 @@ app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB
 _camera = None
 _camera_lock = None
 _camera_source = 0  # default webcam index; can be an RTSP/IP URL
+
+# Live-fire confirmation state: when the live feed crosses the alert
+# threshold we capture a snapshot and wait for the user to confirm.
+_live_state = {
+    "alert_active": False,
+    "snapshot_id": None,
+    "snapshot_path": None,
+    "fire_score": 0.0,
+    "confirmed": False,
+    "last_alert_time": 0.0,
+}
+_live_state_lock = __import__("threading").Lock()
 
 
 def _get_camera():
@@ -67,6 +83,20 @@ def _read_frame():
         return frame if ok else None
     except Exception:
         return None
+
+
+def _set_camera_source(source):
+    """Switch the live camera source (webcam index, RTSP URL, or IP cam URL)."""
+    global _camera, _camera_source
+    with _live_state_lock:
+        _camera_source = source
+        if _camera is not None:
+            _camera.release()
+            _camera = None
+        _live_state["alert_active"] = False
+        _live_state["snapshot_id"] = None
+        _live_state["snapshot_path"] = None
+        _live_state["confirmed"] = False
 
 
 # ---------------------------------------------------------------------------
@@ -99,8 +129,6 @@ def _modality_result_to_dict(result: ModalityResult) -> dict:
             {"label": d.label, "confidence": round(d.confidence, 4), "box": d.box}
             for d in result.detections
         ],
-        "animal_detected": result.animal_detected,
-        "animal_labels": result.animal_labels,
     }
 
 
@@ -112,7 +140,6 @@ def _decision_to_dict(decision: FusedDecision) -> dict:
         "modalities_confirmed": decision.modalities_confirmed,
         "sos_allowed": decision.sos_allowed,
         "message": decision.message,
-        "animal_alerts": decision.animal_alerts,
     }
 
 
@@ -147,15 +174,12 @@ def live_feed():
                 time.sleep(0.5)
                 continue
 
-            result = detector.detect_rgb(frame)
+            result = detector.detect_rgb(frame, conf=LIVE_FIRE_THRESHOLD)
             annotated = result.annotated if result.annotated is not None else frame
             status = "FIRE ALERT" if result.fire_detected else "Monitoring"
             color = (0, 0, 255) if result.fire_detected else (0, 180, 0)
             cv2.putText(annotated, status, (20, 40), cv2.FONT_HERSHEY_SIMPLEX,
                         0.9, color, 2, cv2.LINE_AA)
-            if result.animal_detected:
-                cv2.putText(annotated, "Animal: " + ",".join(result.animal_labels),
-                            (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2, cv2.LINE_AA)
 
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                    + _encode_jpeg(annotated) + b"\r\n")
@@ -171,15 +195,98 @@ def live_status():
     frame = _read_frame()
     if frame is None:
         return jsonify({"available": False, "fire_detected": False})
-    result = detector.detect_rgb(frame)
+
+    result = detector.detect_rgb(frame, conf=LIVE_FIRE_THRESHOLD)
+
+    # Snapshot + confirmation flow: when fire crosses the alert threshold,
+    # capture a snapshot once and hold the alert until the user confirms.
+    with _live_state_lock:
+        if result.fire_detected and not _live_state["alert_active"]:
+            now = time.time()
+            if now - _live_state["last_alert_time"] > 10.0:  # debounce 10s
+                snap_id = f"snap_{int(now)}_{uuid.uuid4().hex[:6]}"
+                snap_path = SNAPSHOT_DIR / f"{snap_id}.jpg"
+                snap_path.write_bytes(_encode_jpeg(frame))
+                _live_state.update({
+                    "alert_active": True,
+                    "snapshot_id": snap_id,
+                    "snapshot_path": str(snap_path),
+                    "fire_score": result.fire_score,
+                    "confirmed": False,
+                    "last_alert_time": now,
+                })
+        elif not result.fire_detected:
+            # Auto-clear after the fire leaves the frame (unless confirmed).
+            if not _live_state["confirmed"]:
+                _live_state["alert_active"] = False
+
+        state = dict(_live_state)
+
     return jsonify({
         "available": True,
         "fire_detected": result.fire_detected,
         "fire_score": round(result.fire_score, 4),
-        "animal_detected": result.animal_detected,
-        "animal_labels": result.animal_labels,
         "detections": [{"label": d.label, "confidence": round(d.confidence, 4)} for d in result.detections],
+        "alert_active": state["alert_active"],
+        "snapshot_id": state["snapshot_id"],
+        "snapshot_url": f"/api/snapshots/{state['snapshot_id']}.jpg" if state["snapshot_id"] else None,
+        "confirmed": state["confirmed"],
     })
+
+
+@app.route("/api/snapshots/<path:filename>")
+def snapshot_file(filename):
+    """Serve a captured snapshot image."""
+    safe = Path(filename).name
+    path = SNAPSHOT_DIR / safe
+    if not path.exists():
+        return jsonify({"error": "Snapshot not found"}), 404
+    return Response(path.read_bytes(), mimetype="image/jpeg")
+
+
+@app.route("/api/live/confirm", methods=["POST"])
+def live_confirm():
+    """User confirms the live-fire snapshot — dispatch the rescue team."""
+    data = request.get_json(silent=True) or {}
+    snapshot_id = data.get("snapshot_id")
+    with _live_state_lock:
+        if not _live_state["alert_active"] or _live_state["snapshot_id"] != snapshot_id:
+            return jsonify({"error": "No active alert for this snapshot."}), 400
+        _live_state["confirmed"] = True
+
+    alert = {
+        "snapshot_id": snapshot_id,
+        "status": "dispatched",
+        "provider_message_id": str(uuid.uuid4()),
+        "timestamp": time.time(),
+        "note": "Rescue team dispatch confirmed by operator. Configure SMS/voice provider for real alerts.",
+    }
+    return jsonify(alert)
+
+
+@app.route("/api/live/dismiss", methods=["POST"])
+def live_dismiss():
+    """User dismisses the live-fire alert (false alarm)."""
+    with _live_state_lock:
+        _live_state["alert_active"] = False
+        _live_state["snapshot_id"] = None
+        _live_state["snapshot_path"] = None
+        _live_state["confirmed"] = False
+    return jsonify({"status": "dismissed"})
+
+
+@app.route("/api/camera/source", methods=["POST"])
+def camera_source():
+    """Switch the live camera source (webcam index, RTSP, or IP cam URL)."""
+    data = request.get_json(silent=True) or {}
+    source = data.get("source")
+    if source is None or str(source).strip() == "":
+        return jsonify({"error": "source is required"}), 400
+    try:
+        _set_camera_source(int(source))
+    except ValueError:
+        _set_camera_source(str(source).strip())
+    return jsonify({"status": "ok", "source": _camera_source})
 
 
 @app.route("/api/upload", methods=["POST"])

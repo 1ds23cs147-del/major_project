@@ -11,3 +11,4 @@ original datasets/
 
 # Uploaded scene captures are runtime data, not source code.
 webapp/uploads/
+webapp/snapshots/
