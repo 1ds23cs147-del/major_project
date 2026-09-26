@@ -43,7 +43,7 @@ except Exception:  # pragma: no cover - keeps the UI usable without the model pa
     YOLO = None
 
 
-MODEL_ROOT = Path(__file__).resolve().parents[2] / "project_data" / "models"
+MODEL_ROOT = Path(__file__).resolve().parents[2] / "models"
 MODEL_CANDIDATES = (
     MODEL_ROOT / "rgb_fire_smoke_best.pt",
 )

@@ -8,7 +8,7 @@ from ultralytics import YOLO
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the forest-camera fire/smoke alert detector.")
     parser.add_argument("--data", type=Path, default=Path("project_data/artifacts/forest_fire_yolo/data.yaml"))
-    parser.add_argument("--weights", default="project_data/models/yolo11n.pt")
+    parser.add_argument("--weights", default="models/yolo11n.pt")
     parser.add_argument("--epochs", type=int, default=60, help="Training epochs (GPU makes 50-60 affordable).")
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)

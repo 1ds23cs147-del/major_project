@@ -157,7 +157,7 @@ def full_mode(args: argparse.Namespace) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a detailed binary fire-alert classification report.")
-    parser.add_argument("--weights", type=Path, default=Path("project_data/models/rgb_fire_smoke_best.pt"))
+    parser.add_argument("--weights", type=Path, default=Path("models/rgb_fire_smoke_best.pt"))
     parser.add_argument("--data", type=Path, default=Path("project_data/artifacts/forest_fire_yolo/data.yaml"))
     parser.add_argument("--conf", type=float, default=0.40, help="Alert threshold for binary classification.")
     parser.add_argument("--device", default="0")

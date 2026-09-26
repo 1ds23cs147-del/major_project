@@ -90,7 +90,7 @@ def main() -> None:
     parser.add_argument(
         "--previous-weights",
         type=Path,
-        default=Path("project_data/models/rgb_fire_smoke_best.pt"),
+        default=Path("models/rgb_fire_smoke_best.pt"),
         help="Path to previously trained weights for continuous training"
     )
     parser.add_argument(
@@ -152,7 +152,7 @@ def main() -> None:
     if not weights_path.exists():
         print_status(f"⚠️  Previous weights not found: {weights_path}")
         print_status(f"   Will start training with default YOLO11n weights")
-        weights_to_load = "project_data/models/yolo11n.pt"
+        weights_to_load = "models/yolo11n.pt"
     else:
         print_status(f"✓ Previous weights found: {weights_path}")
         weights_to_load = str(weights_path)

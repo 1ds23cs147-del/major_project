@@ -63,8 +63,8 @@ Set-Location .\firewatch
 ```
 
 Open `http://127.0.0.1:5000`. The RGB detector loads
-`project_data/models/rgb_fire_smoke_best.pt`; the thermal
-fire/no-fire classifier loads `project_data/models/thermal_fire_no_fire_best.pt`.
+`models/rgb_fire_smoke_best.pt`; the thermal
+fire/no-fire classifier loads `models/thermal_fire_no_fire_best.pt`.
 The classifier page includes three curated RGB/thermal demo pairs. Matching NIR
 images are retained with those capture sets for the multimodal demo assets.
 
@@ -85,7 +85,7 @@ images are retained with those capture sets for the multimodal demo assets.
 - `train_forest_fire_detector.py`, `train_thermal_classifier.py` - model training
 - `infer_video.py`, `evaluate_forest_fire_detector.py` - video inference and evaluation
 - `prepare_*.py`, `audit_*.py`, `build_clean_candidate_splits.py` - dataset preparation and audit utilities
-- `project_data/models/` - included trained checkpoints and YOLO starter weights
+- `models/` - included trained checkpoints and YOLO starter weights required for inference
 
 ## Data and runtime files
 
@@ -96,10 +96,13 @@ Local data and outputs are grouped under `project_data/`:
 - `project_data/artifacts/` - prepared datasets, audit outputs, and generated reports
 - `project_data/runs/` - training runs, logs, and intermediate checkpoints
 - `project_data/weights/` - archived/backup weights
-- `project_data/models/` - the four curated weights needed to load or train models
 
-The first five directories are local-only and excluded from Git; the curated
-model weights are tracked with Git LFS. The Python virtual environment, camera
+`project_data/` is not required for live inference after the models are in
+`models/`. It is required for dataset preparation, retraining, and reproducing
+dataset evaluation.
+
+All contents of `project_data/` are local-only and excluded from Git; required
+model weights are stored separately in `models/` and tracked with Git LFS. The Python virtual environment, camera
 snapshots, and local FireWatch SQLite database are also local-only. Obtain the
 datasets separately before retraining. The matched demo captures remain in
 `webapp/uploads/` because they are application demo assets.

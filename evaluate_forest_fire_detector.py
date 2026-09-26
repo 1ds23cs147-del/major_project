@@ -9,7 +9,7 @@ from ultralytics import YOLO
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Report test detection and binary fire-alert metrics.")
-    parser.add_argument("--weights", type=Path, default=Path("project_data/models/rgb_fire_smoke_best.pt"))
+    parser.add_argument("--weights", type=Path, default=Path("models/rgb_fire_smoke_best.pt"))
     parser.add_argument("--data", type=Path, default=Path("project_data/artifacts/forest_fire_yolo/data.yaml"))
     parser.add_argument("--conf", type=float, default=0.40, help="Alert threshold; tune on validation data to control false alerts.")
     parser.add_argument("--device", default="0")

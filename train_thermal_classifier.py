@@ -13,7 +13,7 @@ DEFAULT_DATA = ROOT / "project_data" / "datasets" / "rgb_thermal" / "flame3_cls_
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the thermal fire/no-fire classifier.")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    parser.add_argument("--weights", default=str(ROOT / "project_data" / "models" / "yolo11n-cls.pt"))
+    parser.add_argument("--weights", default=str(ROOT / "models" / "yolo11n-cls.pt"))
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--imgsz", type=int, default=224)
     parser.add_argument("--batch", type=int, default=32)

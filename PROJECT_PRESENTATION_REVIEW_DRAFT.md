@@ -251,7 +251,7 @@ Completed run:
 
 - Run: `project_data/runs/forest_fire/fasdd_real_smoke_30ep`
 - Training: 30/30 epochs completed
-- Final best checkpoint: `project_data/models/rgb_fire_smoke_best.pt`
+- Final best checkpoint: `models/rgb_fire_smoke_best.pt`
 - RGB classes: `fire`, `smoke`
 
 | Metric | Final validation result |
@@ -280,7 +280,7 @@ Completed run:
 
 Thermal model:
 
-- Checkpoint: `project_data/models/thermal_fire_no_fire_best.pt`
+- Checkpoint: `models/thermal_fire_no_fire_best.pt`
 - Classes: `fire`, `no_fire`
 - Training reached epoch 18
 - Thermal model is classification-only and does not output bounding boxes

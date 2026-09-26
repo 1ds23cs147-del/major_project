@@ -28,8 +28,8 @@ firewatch-private-backup*.db-shm
 droidcam_current.jpg
 
 # Curated inference/training weights are intentionally tracked with Git LFS.
-!project_data/models/
-!project_data/models/*.pt
+!models/
+!models/*.pt
 
 # Keep only the curated, matched demo captures in the repository.
 !webapp/uploads/

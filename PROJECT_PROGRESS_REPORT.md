@@ -100,7 +100,7 @@ Checkpoint files:
 
 - `project_data/runs/forest_fire/fasdd_real_smoke_30ep/weights/epoch9.pt`
 - `project_data/runs/forest_fire/fasdd_real_smoke_30ep/weights/last.pt`
-- `project_data/models/rgb_fire_smoke_best.pt`
+- `models/rgb_fire_smoke_best.pt`
 
 The run was resumed from `last.pt` and reached at least epoch 15 before it was stopped.
 
@@ -122,8 +122,8 @@ It ended at epoch 18. Its validation log was effectively perfect, but the result
 Training status:
 
 - Original RGB baseline training: completed 30/30 epochs from the resumed `last.pt` checkpoint
-- Final checkpoint: `project_data/models/rgb_fire_smoke_best.pt`
-- Thermal classifier checkpoint: `project_data/models/thermal_fire_no_fire_best.pt`
+- Final checkpoint: `models/rgb_fire_smoke_best.pt`
+- Thermal classifier checkpoint: `models/thermal_fire_no_fire_best.pt`
 - Final validation metrics: precision 68.7%, recall 57.6%, mAP@50 63.7%, mAP@50-95 38.6%
 - Class metrics: fire mAP@50 58.0%, smoke mAP@50 69.3%
 - New clean-split training: not started
