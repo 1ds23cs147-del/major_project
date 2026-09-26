@@ -17,6 +17,9 @@ webapp/snapshots/
 # FireWatch runtime state and captured evidence are local data.
 firewatch/firewatch.db
 firewatch/static/snapshots/
+firewatch-private-backup*.db
+firewatch-private-backup*.db-wal
+firewatch-private-backup*.db-shm
 droidcam_current.jpg
 
 # Keep only the curated, matched demo captures in the repository.
