@@ -7,8 +7,8 @@ from ultralytics import YOLO
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the forest-camera fire/smoke alert detector.")
-    parser.add_argument("--data", type=Path, default=Path("artifacts/forest_fire_yolo/data.yaml"))
-    parser.add_argument("--weights", default="yolo11n.pt")
+    parser.add_argument("--data", type=Path, default=Path("project_data/artifacts/forest_fire_yolo/data.yaml"))
+    parser.add_argument("--weights", default="project_data/models/yolo11n.pt")
     parser.add_argument("--epochs", type=int, default=60, help="Training epochs (GPU makes 50-60 affordable).")
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=16)
@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument("--name", default="fire_smoke", help="Output run name.")
     parser.add_argument("--resume", type=Path, help="Resume an interrupted run from its last.pt checkpoint.")
     args = parser.parse_args()
-    project_dir = Path(__file__).resolve().parent / "runs" / "forest_fire"
+    project_dir = Path(__file__).resolve().parent / "project_data" / "runs" / "forest_fire"
     if args.resume:
         if not args.resume.is_file():
             raise SystemExit(f"Checkpoint not found: {args.resume}")

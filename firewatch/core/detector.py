@@ -43,13 +43,12 @@ except Exception:  # pragma: no cover - keeps the UI usable without the model pa
     YOLO = None
 
 
-MODEL_ROOT = Path(__file__).resolve().parents[2] / "runs" / "forest_fire"
+MODEL_ROOT = Path(__file__).resolve().parents[2] / "project_data" / "models"
 MODEL_CANDIDATES = (
-    MODEL_ROOT / "fasdd_real_smoke_30ep" / "weights" / "best.pt",
-    MODEL_ROOT / "fire_smoke" / "weights" / "best.pt",
+    MODEL_ROOT / "rgb_fire_smoke_best.pt",
 )
 MODEL_PATH = next((path for path in MODEL_CANDIDATES if path.is_file()), MODEL_CANDIDATES[-1])
-THERMAL_MODEL_PATH = Path(__file__).resolve().parents[2] / "runs" / "forest_fire" / "thermal_fire" / "weights" / "best.pt"
+THERMAL_MODEL_PATH = MODEL_ROOT / "thermal_fire_no_fire_best.pt"
 
 
 # --------------------------------------------------------------------------

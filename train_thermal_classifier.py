@@ -7,13 +7,13 @@ from ultralytics import YOLO
 
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_DATA = ROOT / "datasets" / "rgb_thermal" / "flame3_cls_real" / "thermal"
+DEFAULT_DATA = ROOT / "project_data" / "datasets" / "rgb_thermal" / "flame3_cls_real" / "thermal"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the thermal fire/no-fire classifier.")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
-    parser.add_argument("--weights", default="yolo11n-cls.pt")
+    parser.add_argument("--weights", default=str(ROOT / "project_data" / "models" / "yolo11n-cls.pt"))
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--imgsz", type=int, default=224)
     parser.add_argument("--batch", type=int, default=32)
@@ -32,7 +32,7 @@ def main() -> None:
         batch=args.batch,
         device=args.device,
         workers=args.workers,
-        project=str(ROOT / "runs" / "forest_fire"),
+        project=str(ROOT / "project_data" / "runs" / "forest_fire"),
         name=args.name,
         exist_ok=True,
         pretrained=True,

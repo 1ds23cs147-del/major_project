@@ -191,7 +191,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Audit exact and perceptual duplicate leakage in RGB and thermal data.")
     parser.add_argument("--rgb-yolo", type=Path, required=True)
     parser.add_argument("--thermal", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, default=Path("artifacts/leakage_audit"))
+    parser.add_argument("--output-dir", type=Path, default=Path("project_data/artifacts/leakage_audit"))
     parser.add_argument("--threshold", type=int, default=4)
     args = parser.parse_args()
     audit_modality("RGB", {"train": args.rgb_yolo / "train/images", "val": args.rgb_yolo / "val/images"}, args.output_dir / "rgb_duplicate_and_leakage_report.xlsx", args.threshold)

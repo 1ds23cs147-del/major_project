@@ -40,11 +40,11 @@ The co-guide document requires:
 
 Location:
 
-`datasets/rgb_thermal/fasdd_yolo_real`
+`project_data/datasets/rgb_thermal/fasdd_yolo_real`
 
 Manifest:
 
-`datasets/rgb_thermal/fasdd_yolo_real/data.yaml`
+`project_data/datasets/rgb_thermal/fasdd_yolo_real/data.yaml`
 
 Classes:
 
@@ -62,11 +62,11 @@ Approximate image counts:
 
 Location:
 
-`datasets/rgb_thermal/flame3_cls_real/thermal`
+`project_data/datasets/rgb_thermal/flame3_cls_real/thermal`
 
 Manifest:
 
-`datasets/rgb_thermal/flame3_cls_real/thermal/data.yaml`
+`project_data/datasets/rgb_thermal/flame3_cls_real/thermal/data.yaml`
 
 Classes:
 
@@ -84,7 +84,7 @@ Image counts:
 
 Separate thermal test data exists under:
 
-`datasets/rgb_thermal/flame3_cls_test/thermal`
+`project_data/datasets/rgb_thermal/flame3_cls_test/thermal`
 
 It contains five fire images and five no-fire images.
 
@@ -94,13 +94,13 @@ Important limitation: thermal filenames are sequential numbers such as `00001.JP
 
 The previous RGB detector run was:
 
-`runs/forest_fire/fasdd_real_smoke_30ep`
+`project_data/runs/forest_fire/fasdd_real_smoke_30ep`
 
 Checkpoint files:
 
-- `runs/forest_fire/fasdd_real_smoke_30ep/weights/epoch9.pt`
-- `runs/forest_fire/fasdd_real_smoke_30ep/weights/last.pt`
-- `runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt`
+- `project_data/runs/forest_fire/fasdd_real_smoke_30ep/weights/epoch9.pt`
+- `project_data/runs/forest_fire/fasdd_real_smoke_30ep/weights/last.pt`
+- `project_data/models/rgb_fire_smoke_best.pt`
 
 The run was resumed from `last.pt` and reached at least epoch 15 before it was stopped.
 
@@ -115,14 +115,15 @@ The previous run must be treated as a baseline only because its train/validation
 
 The existing thermal run was:
 
-`runs/forest_fire/thermal_fire`
+`project_data/runs/forest_fire/thermal_fire`
 
 It ended at epoch 18. Its validation log was effectively perfect, but the result is not accepted as production evidence because the application verification found a severe cold-frame false positive.
 
 Training status:
 
 - Original RGB baseline training: completed 30/30 epochs from the resumed `last.pt` checkpoint
-- Final checkpoint: `runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt`
+- Final checkpoint: `project_data/models/rgb_fire_smoke_best.pt`
+- Thermal classifier checkpoint: `project_data/models/thermal_fire_no_fire_best.pt`
 - Final validation metrics: precision 68.7%, recall 57.6%, mAP@50 63.7%, mAP@50-95 38.6%
 - Class metrics: fire mAP@50 58.0%, smoke mAP@50 69.3%
 - New clean-split training: not started
@@ -180,7 +181,7 @@ The following dependencies were installed in the project virtual environment and
 
 Report:
 
-`artifacts/leakage_audit/thermal_duplicate_and_leakage_report.xlsx`
+`project_data/artifacts/leakage_audit/thermal_duplicate_and_leakage_report.xlsx`
 
 Results:
 
@@ -206,7 +207,7 @@ Because the thermal filenames contain no reliable event identifier, a defensible
 
 Report:
 
-`artifacts/leakage_audit/rgb_exact_group_audit.csv`
+`project_data/artifacts/leakage_audit/rgb_exact_group_audit.csv`
 
 Results:
 
@@ -217,7 +218,7 @@ Results:
 
 Quarantine list:
 
-`artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv`
+`project_data/artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv`
 
 Interpretation:
 
@@ -238,11 +239,11 @@ All of these appear in both train and validation. They are class prefixes, not r
 
 The optimized BK-tree near-duplicate worker was launched after the exact audit. Its output is expected at:
 
-`artifacts/leakage_audit/rgb_near_duplicate_review.xlsx`
+`project_data/artifacts/leakage_audit/rgb_near_duplicate_review.xlsx`
 
 Its progress log is:
 
-`artifacts/leakage_audit/rgb_near_audit.log`
+`project_data/artifacts/leakage_audit/rgb_near_audit.log`
 
 The earlier all-pairs implementation was stopped because it reached the hashing stage but became impractical during the large comparison stage. The original dataset was not modified.
 
@@ -261,7 +262,7 @@ The first conservative candidate split was built without modifying the original 
 
 Manifest:
 
-`artifacts/clean_candidate_datasets/clean_split_manifest.txt`
+`project_data/artifacts/clean_candidate_datasets/clean_split_manifest.txt`
 
 RGB candidate:
 
@@ -358,11 +359,11 @@ The epoch-15 RGB checkpoint is preserved as a baseline. It is not deleted and is
 
 Check:
 
-`artifacts/leakage_audit/rgb_near_audit.log`
+`project_data/artifacts/leakage_audit/rgb_near_audit.log`
 
 Then verify:
 
-`artifacts/leakage_audit/rgb_near_duplicate_review.xlsx`
+`project_data/artifacts/leakage_audit/rgb_near_duplicate_review.xlsx`
 
 ### Step 2: Review the flagged pairs
 
@@ -481,10 +482,10 @@ The project is not yet at the final-model stage because the current datasets hav
 - `quarantine_rgb_exact_duplicates.py`
 - `run_rgb_audit.py`
 - `requirements.txt`
-- `artifacts/leakage_audit/thermal_duplicate_and_leakage_report.xlsx`
-- `artifacts/leakage_audit/rgb_exact_group_audit.csv`
-- `artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv`
-- `artifacts/leakage_audit/AUDIT_STATUS.md`
+- `project_data/artifacts/leakage_audit/thermal_duplicate_and_leakage_report.xlsx`
+- `project_data/artifacts/leakage_audit/rgb_exact_group_audit.csv`
+- `project_data/artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv`
+- `project_data/artifacts/leakage_audit/AUDIT_STATUS.md`
 
 ## 13. Final Summary
 

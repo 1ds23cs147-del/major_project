@@ -84,13 +84,13 @@ def main() -> None:
     parser.add_argument(
         "--data",
         type=Path,
-        default=Path("original datasets/yet_to_train/data.yaml"),
+        default=Path("project_data/original_datasets/yet_to_train/data.yaml"),
         help="Path to data.yaml for yet_to_train dataset"
     )
     parser.add_argument(
         "--previous-weights",
         type=Path,
-        default=Path("runs/forest_fire/fire_smoke/weights/best.pt"),
+        default=Path("project_data/models/rgb_fire_smoke_best.pt"),
         help="Path to previously trained weights for continuous training"
     )
     parser.add_argument(
@@ -138,7 +138,7 @@ def main() -> None:
     # Resolve paths
     data_yaml = args.data.resolve()
     weights_path = args.previous_weights.resolve()
-    project_dir = Path(__file__).resolve().parent / "runs" / "forest_fire"
+    project_dir = Path(__file__).resolve().parent / "project_data" / "runs" / "forest_fire"
     
     # Validate paths
     print_status(f"\n{'='*60}")
@@ -152,7 +152,7 @@ def main() -> None:
     if not weights_path.exists():
         print_status(f"⚠️  Previous weights not found: {weights_path}")
         print_status(f"   Will start training with default YOLO11n weights")
-        weights_to_load = "yolo11n.pt"
+        weights_to_load = "project_data/models/yolo11n.pt"
     else:
         print_status(f"✓ Previous weights found: {weights_path}")
         weights_to_load = str(weights_path)
@@ -215,8 +215,8 @@ def main() -> None:
         
         # Move datasets if not disabled
         if not args.no_move:
-            source_dir = Path("original datasets/yet_to_train")
-            dest_dir = Path("original datasets/trained_datasets")
+            source_dir = Path("project_data/original_datasets/yet_to_train")
+            dest_dir = Path("project_data/original_datasets/trained_datasets")
             move_datasets(source_dir, dest_dir)
         
         print_status(f"{'='*60}")

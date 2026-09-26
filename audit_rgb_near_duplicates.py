@@ -67,7 +67,7 @@ def write_sheet(workbook: Workbook, name: str, rows: list[dict]) -> None:
     sheet.auto_filter.ref = sheet.dimensions
 
 
-root = Path("datasets/rgb_thermal/fasdd_yolo_real")
+root = Path("project_data/datasets/rgb_thermal/fasdd_yolo_real")
 train = records(root / "train/images", "train")
 val = records(root / "val/images", "val")
 tree = None
@@ -96,10 +96,10 @@ workbook = Workbook()
 workbook.remove(workbook.active)
 write_sheet(workbook, "RGB_Train_Val_Near", cross)
 write_sheet(workbook, "RGB_Train_Val_Exact", [])
-output = Path("artifacts/leakage_audit/rgb_near_duplicate_review.xlsx")
+output = Path("project_data/artifacts/leakage_audit/rgb_near_duplicate_review.xlsx")
 output.parent.mkdir(parents=True, exist_ok=True)
 workbook.save(output)
-Path("artifacts/leakage_audit/rgb_near_duplicate_summary.txt").write_text(
+Path("project_data/artifacts/leakage_audit/rgb_near_duplicate_summary.txt").write_text(
     f"train={len(train)}\nval={len(val)}\ncross_near_candidates={len(cross)}\nthreshold={THRESHOLD}\n",
     encoding="utf-8",
 )

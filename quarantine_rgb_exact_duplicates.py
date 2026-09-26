@@ -5,8 +5,8 @@ from collections import defaultdict
 from pathlib import Path
 
 
-source = Path("artifacts/leakage_audit/rgb_exact_group_audit.csv")
-destination = Path("artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv")
+source = Path("project_data/artifacts/leakage_audit/rgb_exact_group_audit.csv")
+destination = Path("project_data/artifacts/leakage_audit/rgb_exact_cross_split_validation_quarantine.csv")
 
 with source.open(newline="", encoding="utf-8") as handle:
     rows = list(csv.DictReader(handle))

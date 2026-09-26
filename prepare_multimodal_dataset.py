@@ -88,8 +88,8 @@ def copy_flir_person_split(flir_root: Path, source_split: str, output_split: str
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build the unified fire, smoke, other, and person YOLO dataset.")
-    parser.add_argument("--dataset-root", type=Path, default=Path("original datasets"))
-    parser.add_argument("--output", type=Path, default=Path("artifacts/unified_yolo"))
+    parser.add_argument("--dataset-root", type=Path, default=Path("project_data/original_datasets"))
+    parser.add_argument("--output", type=Path, default=Path("project_data/artifacts/unified_yolo"))
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     random.seed(args.seed)

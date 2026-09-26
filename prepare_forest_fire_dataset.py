@@ -71,9 +71,9 @@ def collect_negatives(root: Path, max_per_source: int, rng: random.Random) -> li
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create a clean fire/smoke YOLO dataset.")
-    parser.add_argument("--dataset-root", type=Path, default=Path("original datasets"))
+    parser.add_argument("--dataset-root", type=Path, default=Path("project_data/original_datasets"))
     parser.add_argument("--additional-root", type=Path, help="Optional second YOLO dataset root with fire/smoke labels.")
-    parser.add_argument("--output", type=Path, default=Path("artifacts/forest_fire_yolo"))
+    parser.add_argument("--output", type=Path, default=Path("project_data/artifacts/forest_fire_yolo"))
     parser.add_argument("--overwrite", action="store_true", help="Replace an incomplete output directory at --output.")
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for negative-sample selection.")
     parser.add_argument("--neg-train", type=int, default=20000, help="Max negative images added to train (0 disables).")

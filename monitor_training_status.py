@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def latest_run(root: Path) -> Path | None:
-    candidates = list(root.glob("runs/**/args.yaml"))
+    candidates = list(root.glob("project_data/runs/**/args.yaml"))
     return max(candidates, key=lambda item: item.stat().st_mtime).parent if candidates else None
 
 
@@ -55,7 +55,7 @@ def projection(rows: list[dict[str, str]], total_epochs: int) -> str:
 
 
 def live_batch_status(root: Path) -> str:
-    logs = [root / "artifacts" / "forest_fire_training_30.err", root / "artifacts" / "forest_fire_training_30.log"]
+    logs = [root / "project_data" / "artifacts" / "forest_fire_training_30.err", root / "project_data" / "artifacts" / "forest_fire_training_30.log"]
     existing = [path for path in logs if path.exists()]
     if not existing:
         return "No active batch progress has been logged yet."

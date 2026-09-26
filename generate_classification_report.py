@@ -12,7 +12,7 @@ Two modes:
 
 Usage:
     .\\.venv\\Scripts\\python.exe generate_classification_report.py [--conf 0.40] [--device 0]
-    python generate_classification_report.py --from-json [--metrics runs/forest_fire/fire_smoke/test_metrics.json]
+    python generate_classification_report.py --from-json [--metrics project_data/runs/forest_fire/fire_smoke/test_metrics.json]
 """
 
 from __future__ import annotations
@@ -157,8 +157,8 @@ def full_mode(args: argparse.Namespace) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a detailed binary fire-alert classification report.")
-    parser.add_argument("--weights", type=Path, default=Path("runs/forest_fire/fire_smoke/weights/best.pt"))
-    parser.add_argument("--data", type=Path, default=Path("artifacts/forest_fire_yolo/data.yaml"))
+    parser.add_argument("--weights", type=Path, default=Path("project_data/models/rgb_fire_smoke_best.pt"))
+    parser.add_argument("--data", type=Path, default=Path("project_data/artifacts/forest_fire_yolo/data.yaml"))
     parser.add_argument("--conf", type=float, default=0.40, help="Alert threshold for binary classification.")
     parser.add_argument("--device", default="0")
     parser.add_argument(
@@ -169,14 +169,15 @@ def main() -> None:
     parser.add_argument(
         "--metrics",
         type=Path,
-        default=Path("runs/forest_fire/fire_smoke/test_metrics.json"),
+        default=Path("project_data/runs/forest_fire/fire_smoke/test_metrics.json"),
         help="Path to test_metrics.json used in --from-json mode.",
     )
     args = parser.parse_args()
 
     report = from_json(args.metrics, args.conf) if args.from_json else full_mode(args)
 
-    destination = args.weights.resolve().parent.parent / "classification_metrics.json"
+    destination = Path("project_data/runs/evaluation/classification_metrics.json")
+    destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     print(json.dumps(report, indent=2))

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DATA_ROOT = ROOT / "datasets" / "rgb_thermal"
+DATA_ROOT = ROOT / "project_data" / "datasets" / "rgb_thermal"
 
 
 def _remove_tree(path: Path) -> None:

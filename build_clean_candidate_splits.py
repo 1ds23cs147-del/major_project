@@ -8,9 +8,9 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 
-ROOT = Path("datasets/rgb_thermal")
-OUTPUT = Path("artifacts/clean_candidate_datasets")
-AUDIT = Path("artifacts/leakage_audit")
+ROOT = Path("project_data/datasets/rgb_thermal")
+OUTPUT = Path("project_data/artifacts/clean_candidate_datasets")
+AUDIT = Path("project_data/artifacts/leakage_audit")
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
 

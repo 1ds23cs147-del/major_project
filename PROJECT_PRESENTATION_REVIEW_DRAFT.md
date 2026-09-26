@@ -249,9 +249,9 @@ A shared ID provides traceability; it cannot prove that unrelated files show the
 
 Completed run:
 
-- Run: `runs/forest_fire/fasdd_real_smoke_30ep`
+- Run: `project_data/runs/forest_fire/fasdd_real_smoke_30ep`
 - Training: 30/30 epochs completed
-- Final best checkpoint: `runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt`
+- Final best checkpoint: `project_data/models/rgb_fire_smoke_best.pt`
 - RGB classes: `fire`, `smoke`
 
 | Metric | Final validation result |
@@ -280,7 +280,7 @@ Completed run:
 
 Thermal model:
 
-- Checkpoint: `runs/forest_fire/thermal_fire/weights/best.pt`
+- Checkpoint: `project_data/models/thermal_fire_no_fire_best.pt`
 - Classes: `fire`, `no_fire`
 - Training reached epoch 18
 - Thermal model is classification-only and does not output bounding boxes
@@ -414,7 +414,7 @@ Use the following references as the initial bibliography and verify publisher de
 6. Ultralytics, “YOLO11 Documentation,” Ultralytics official documentation, accessed 2026.
 7. Ultralytics, “Ultralytics Python Usage and Train Mode Documentation,” official documentation, accessed 2026.
 8. Project implementation files: `train_forest_fire_detector.py`, `train_thermal_classifier.py`, `infer_video.py`, `firewatch/core/detector.py`, and `webapp/app.py`.
-9. Project artifacts: `PROJECT_PROGRESS_REPORT.md`, `CLASSIFICATION_METRICS.md`, `MULTIMODAL_WEB_ARCHITECTURE.md`, and leakage-audit reports under `artifacts/leakage_audit/`.
+9. Project artifacts: `PROJECT_PROGRESS_REPORT.md`, `CLASSIFICATION_METRICS.md`, `MULTIMODAL_WEB_ARCHITECTURE.md`, and leakage-audit reports under `project_data/artifacts/leakage_audit/`.
 
 ---
 

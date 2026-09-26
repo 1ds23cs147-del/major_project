@@ -9,6 +9,11 @@ __pycache__/
 # Large local source datasets are not versioned with the application code.
 original datasets/
 datasets/
+project_data/datasets/
+project_data/original_datasets/
+project_data/artifacts/
+project_data/runs/
+project_data/weights/
 
 # Uploaded scene captures are runtime data, not source code.
 webapp/uploads/
@@ -21,6 +26,10 @@ firewatch-private-backup*.db
 firewatch-private-backup*.db-wal
 firewatch-private-backup*.db-shm
 droidcam_current.jpg
+
+# Curated inference/training weights are intentionally tracked with Git LFS.
+!project_data/models/
+!project_data/models/*.pt
 
 # Keep only the curated, matched demo captures in the repository.
 !webapp/uploads/

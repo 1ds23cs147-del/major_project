@@ -87,7 +87,7 @@ The model is treated as a binary classifier: an image is flagged as **fire** if 
 
 ## 5. Raw Data Source
 
-The raw JSON output is stored in `runs/forest_fire/fire_smoke/test_metrics.json` (local, not versioned).
+The raw JSON output is stored in `project_data/runs/forest_fire/fire_smoke/test_metrics.json` (local, not versioned).
 
 ```json
 {
@@ -123,4 +123,4 @@ python generate_classification_report.py --from-json
 
 The full JSON output (including specificity, balanced accuracy, FPR/FNR, and the
 sklearn classification report) is written to
-`runs/forest_fire/fire_smoke/classification_metrics.json`.
+`project_data/runs/evaluation/classification_metrics.json`.

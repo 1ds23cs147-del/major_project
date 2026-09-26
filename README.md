@@ -29,7 +29,7 @@ python monitor_training_status.py
 
 Use `python monitor_training_status.py --once` for a single update. The monitor refreshes every 10 seconds and reports whether the run is still running, the completed epoch count, and the latest metrics.
 
-The training classes are `fire` and `smoke`. The builder excludes unrelated FLIR person labels, retains valid negative images, and removes byte-identical duplicates across splits to prevent leakage. It writes split/class counts to `artifacts/forest_fire_yolo/dataset_summary.json`.
+The training classes are `fire` and `smoke`. The builder excludes unrelated FLIR person labels, retains valid negative images, and removes byte-identical duplicates across splits to prevent leakage. It writes split/class counts to `project_data/artifacts/forest_fire_yolo/dataset_summary.json`.
 
 The evaluation script reports object-detection metrics (precision, recall, mAP) and binary fire-alert metrics (accuracy, precision, recall, F1, and confusion matrix) on the held-out test split.
 
@@ -38,7 +38,7 @@ The evaluation script reports object-detection metrics (precision, recall, mAP) 
 For a saved video:
 
 ```powershell
-python infer_video.py "original datasets/Videos/FP1.mp4"
+python infer_video.py "project_data/original_datasets/Videos/FP1.mp4"
 ```
 
 For Android IP Webcam, use the stream URL shown by the app, for example:
@@ -63,8 +63,8 @@ Set-Location .\firewatch
 ```
 
 Open `http://127.0.0.1:5000`. The RGB detector loads
-`runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt`; the thermal
-fire/no-fire classifier loads `runs/forest_fire/thermal_fire/weights/best.pt`.
+`project_data/models/rgb_fire_smoke_best.pt`; the thermal
+fire/no-fire classifier loads `project_data/models/thermal_fire_no_fire_best.pt`.
 The classifier page includes three curated RGB/thermal demo pairs. Matching NIR
 images are retained with those capture sets for the multimodal demo assets.
 
@@ -85,13 +85,21 @@ images are retained with those capture sets for the multimodal demo assets.
 - `train_forest_fire_detector.py`, `train_thermal_classifier.py` - model training
 - `infer_video.py`, `evaluate_forest_fire_detector.py` - video inference and evaluation
 - `prepare_*.py`, `audit_*.py`, `build_clean_candidate_splits.py` - dataset preparation and audit utilities
-- `runs/forest_fire/.../weights/best.pt` - included trained inference checkpoints
+- `project_data/models/` - included trained checkpoints and YOLO starter weights
 
 ## Data and runtime files
 
-Large source datasets, generated audit/training outputs, the Python virtual
-environment, camera snapshots, and the local FireWatch SQLite database are not
-stored in this Git repository. Obtain the datasets separately before running
-the preparation or retraining scripts. Curated demo captures and trained
-inference checkpoints are included because the website needs them to reproduce
-the demo and load its models.
+Local data and outputs are grouped under `project_data/`:
+
+- `project_data/datasets/` - prepared/source datasets used by the project
+- `project_data/original_datasets/` - source datasets organized by dataset provider
+- `project_data/artifacts/` - prepared datasets, audit outputs, and generated reports
+- `project_data/runs/` - training runs, logs, and intermediate checkpoints
+- `project_data/weights/` - archived/backup weights
+- `project_data/models/` - the four curated weights needed to load or train models
+
+The first five directories are local-only and excluded from Git; the curated
+model weights are tracked with Git LFS. The Python virtual environment, camera
+snapshots, and local FireWatch SQLite database are also local-only. Obtain the
+datasets separately before retraining. The matched demo captures remain in
+`webapp/uploads/` because they are application demo assets.
