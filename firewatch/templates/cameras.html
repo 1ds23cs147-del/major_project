@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% block title %}Cameras — FireWatch{% endblock %}
+
+{% block body %}
+<style>
+.camera-hero { margin-bottom: 32px; }
+.camera-panel { overflow: hidden; }
+.camera-panel__head { padding: 18px 20px; }
+.camera-panel__head h2 { margin: 0; font-size: 16px; }
+.camera-admin .table { border-collapse: collapse; }
+.camera-table-scroll { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+.camera-table-scroll .table { min-width: 760px; }
+.camera-admin .button--small { padding: 7px 10px; font-size: 12px; }
+.camera-admin .modal-card { width: min(560px, 100%); max-height: 90vh; overflow: auto; }
+.modal-card__head, .modal-card__foot { display: flex; align-items: center; gap: 10px; }
+.modal-card__head { justify-content: space-between; }
+.modal-card__head h2 { margin: 0; font-size: 22px; }
+.modal-card__body { display: grid; gap: 16px; }
+.modal-card__foot { justify-content: flex-end; }
+.modal-card__foot .spacer { flex: 1; }
+.camera-admin .field { display: grid; gap: 7px; color: var(--muted); font-size: 13px; }
+.camera-admin .field input, .camera-admin .field select { width: 100%; padding: 11px 12px; background: #10110f; border: 1px solid var(--line); color: var(--ink); }
+.camera-admin .field small { line-height: 1.45; color: var(--muted); }
+@media (max-width: 760px) { .camera-hero { align-items: flex-start; } .camera-hero .hero-actions { width: 100%; } .camera-hero .button { width: 100%; } .modal-card__foot { flex-wrap: wrap; } .modal-card__foot .spacer { display: none; } }
+</style>
+<section class="hero-row camera-hero">
+  <div>
+    <p class="eyebrow">SENSORS / 04</p>
+    <h1>Cameras</h1>
+    <p class="lede">Connect the RGB feed that the AI watches live, then pair a thermal source when available.</p>
+  </div>
+  <div class="hero-actions">
+    <button class="button button--hot" id="openAdd" type="button">Add camera</button>
+  </div>
+</section>
+
+<div class="grid-2 camera-admin" style="grid-template-columns:minmax(0,2fr) minmax(280px,1fr)">
+  <section class="panel camera-panel">
+    <div class="panel__head camera-panel__head">
+      <h2>Connected</h2>
+      <span class="tiny dimmer" id="camCount">{{ cameras|length }} configured</span>
+    </div>
+
+    {% if cameras %}
+    <div class="camera-table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Camera</th><th>Source</th><th>Channel</th><th>Status</th>
+          <th class="num">Risk</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="camRows">
+        {% for c in cameras %}
+        <tr data-cam="{{ c.id }}" data-name="{{ c.name }}" data-source="{{ c.source }}"
+            data-location="{{ c.location }}" data-modality="{{ c.modality }}"
+            data-pair="{{ c.pair_id or '' }}">
+          <td>
+            <div style="font-weight:640">{{ c.name }}</div>
+            {% if c.location %}<div class="tiny dimmer">{{ c.location }}</div>{% endif %}
+          </td>
+          <td class="tiny dim" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">
+            {{ 'Device ' ~ c.source if c.source.isdigit() else c.source }}
+          </td>
+          <td>
+            <span class="chip chip--{{ c.modality }}">
+              {{ 'Thermal' if c.modality == 'thermal' else 'Visible' }}
+            </span>
+            {% if c.pair_id %}
+              {%- set twin = cameras | selectattr('id', 'equalto', c.pair_id) | first -%}
+              <div class="tiny dimmer">+ {{ twin.name if twin else 'thermal pair' }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="row" style="gap:7px;align-items:center">
+              <i class="dot dot--{{ c.status }}" data-dot></i>
+              <span class="tiny" data-status>{{ c.status }}</span>
+            </span>
+            <div class="tiny dimmer" data-err>{{ c.error }}</div>
+          </td>
+          <td class="num mono" data-risk>{{ '%.2f'|format(c.risk) }}</td>
+          <td>
+            <div class="row" style="gap:5px;justify-content:flex-end">
+              <button class="button button--small" data-edit type="button">Edit</button>
+              <button class="button button--small" data-toggle type="button"
+                      data-enabled="{{ '1' if c.enabled else '0' }}">
+                {{ 'Pause' if c.enabled else 'Resume' }}
+              </button>
+              <button class="button button--small" data-del type="button">Remove</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="panel__body">
+      <p class="dim">Nothing connected yet. Add the built-in webcam to get going in
+         one click, or follow the phone instructions on the right.</p>
+      <button class="button button--hot" id="quickLocal" type="button">
+        Use this computer's webcam
+      </button>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="panel camera-panel">
+    <div class="panel__head camera-panel__head"><h2>Connect IP Webcam</h2></div>
+    <div class="panel__body" style="display:grid;gap:12px">
+      <ol class="dim" style="margin:0;padding-left:19px;font-size:var(--t-sm);display:grid;gap:7px">
+        <li>Install <strong>IP Webcam</strong> from the Play Store on the phone.</li>
+        <li>Join the phone and this computer to the same wifi.</li>
+        <li>Open the app, scroll down, tap <strong>Start server</strong>.</li>
+        <li>Read the address at the bottom of the phone screen, something like
+            <code>192.168.1.7:8080</code>.</li>
+        <li>Paste it into the add form. The stream path is worked out for you —
+            leave it off unless you already know it.</li>
+      </ol>
+      <div class="hint">
+        On iPhone, apps that expose an MJPEG stream work the same way. If you
+        paste a URL that already names a path, like
+        <code>http://…/video</code>, or an RTSP URL, it is used exactly as given.
+      </div>
+      <div class="hint">
+        <strong>Thermal cameras.</strong> Add the thermal feed as its own camera,
+        set its channel to Thermal, then edit the visible camera and pick it as
+        the paired channel. Live detection will then fuse both, exactly like the
+        classifier does with uploads.
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<div class="modal" id="addModal" role="dialog" aria-modal="true" aria-labelledby="addTitle" hidden>
+  <div class="modal-card camera-modal">
+    <div class="modal-card__head">
+      <h2 id="addTitle">Add a camera</h2>
+      <button class="button button--small" data-close-modal="#addModal" type="button"
+              aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-card__body">
+      <label class="field">
+           <span>IP Webcam address</span>
+           <input type="text" id="fSource" placeholder="192.168.1.7:8080  or  0 for this computer"
+               autocomplete="off">
+         <small>Paste the address shown by IP Webcam on your phone. You can also
+           paste a full stream URL. <code>0</code> means this computer's webcam.</small>
+      </label>
+
+      <div class="row">
+        <label class="field" style="flex:1;min-width:150px">
+          <span>Name</span>
+          <input type="text" id="fName" placeholder="Kitchen phone">
+        </label>
+        <label class="field" style="flex:1;min-width:150px">
+          <span>Where it is</span>
+          <input type="text" id="fLocation" placeholder="Block B, ground floor">
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="field" style="flex:1;min-width:150px">
+          <span>Channel</span>
+          <select id="fModality">
+            <option value="rgb">Visible light</option>
+            <option value="thermal">Thermal</option>
+          </select>
+        </label>
+        <label class="field" style="flex:1;min-width:150px">
+          <span>Paired thermal camera</span>
+          <select id="fPair">
+            <option value="">None</option>
+            {% for c in cameras if c.modality == 'thermal' %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <small id="fPairNote">Optional. With a pair, live alerts use both channels.</small>
+        </label>
+      </div>
+
+      <div id="testOut" class="tiny dim" role="status" aria-live="polite"></div>
+    </div>
+    <div class="modal-card__foot">
+      <button class="button button--quiet" id="btnTest" type="button">Test connection</button>
+      <span class="spacer"></span>
+      <button class="button button--quiet" data-close-modal="#addModal" type="button">Cancel</button>
+      <button class="button button--hot" id="btnSave" type="button">Add camera</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const { $, $$, api, toast, openModal, closeModal, two } = window.FireWatch;
+
+  let resolved = null;   // the URL that the Test button actually got frames from
+  let editing = null;    // camera id when the modal is in edit mode, else null
+
+  /* One modal, two jobs. The fields are identical; only the wording, the
+     endpoint and whether the source is pre-filled differ. */
+  function openForm(row) {
+    editing = row ? row.dataset.cam : null;
+    resolved = null;
+    $("#testOut").textContent = "";
+    $("#addTitle").textContent = row ? `Edit ${row.dataset.name}` : "Add a camera";
+    $("#btnSave").textContent = row ? "Save changes" : "Add camera";
+
+    $("#fSource").value = row ? row.dataset.source : "";
+    $("#fName").value = row ? row.dataset.name : "";
+    $("#fLocation").value = row ? row.dataset.location : "";
+    $("#fModality").value = row ? row.dataset.modality : "rgb";
+    $("#fPair").value = row ? row.dataset.pair : "";
+
+    paintPairField();
+    openModal("#addModal");
+    (row ? $("#fName") : $("#fSource")).focus();
+  }
+
+  /* A thermal camera does not get a thermal pair of its own. */
+  function paintPairField() {
+    const thermal = $("#fModality").value === "thermal";
+    const opts = $$("#fPair option").filter((o) => o.value && o.value !== editing);
+    $("#fPair").disabled = thermal || opts.length === 0;
+    if (thermal) $("#fPair").value = "";
+    $("#fPairNote").textContent = thermal
+      ? "Thermal cameras are the pair — attach this one to a visible camera instead."
+      : opts.length
+        ? "Optional. With a pair, live alerts use both channels."
+        : "Add a camera on the Thermal channel first, then pair it here.";
+  }
+  $("#fModality")?.addEventListener("change", paintPairField);
+
+  $("#openAdd")?.addEventListener("click", () => openForm(null));
+  $$("[data-edit]").forEach((b) =>
+    b.addEventListener("click", () => openForm(b.closest("[data-cam]"))));
+
+  $("#btnTest")?.addEventListener("click", async (e) => {
+    const source = $("#fSource").value.trim();
+    const out = $("#testOut");
+    if (!source) { out.textContent = "Enter an address first."; return; }
+
+    e.target.disabled = true;
+    out.textContent = "Trying…";
+    try {
+      const r = await api("/api/cameras/test", {
+        method: "POST", body: JSON.stringify({ source }),
+      });
+      if (r.ok) {
+        resolved = r.source || source;
+        out.innerHTML = `<span style="color:var(--ok)">Frames arriving.</span>
+          ${r.width}×${r.height}, first frame in ${r.latency_ms} ms.
+          <br><span class="dimmer">Using ${resolved}</span>`;
+      } else {
+        resolved = null;
+        out.innerHTML = `<span style="color:#FF9E8A">${r.error || "No luck."}</span>`;
+      }
+    } catch (err) {
+      resolved = null;
+      out.innerHTML = `<span style="color:#FF9E8A">${err.message}</span>`;
+    } finally { e.target.disabled = false; }
+  });
+
+  $("#btnSave")?.addEventListener("click", async (e) => {
+    const typed = $("#fSource").value.trim();
+    if (!typed) { toast("Enter a camera address.", "bad"); return; }
+    e.target.disabled = true;
+    const body = JSON.stringify({
+      source: resolved || typed,
+      name: $("#fName").value.trim(),
+      location: $("#fLocation").value.trim(),
+      modality: $("#fModality").value,
+      pair_id: $("#fPair").value || null,
+    });
+    try {
+      await api(editing ? `/api/cameras/${editing}/edit` : "/api/cameras",
+                { method: "POST", body });
+      toast(editing ? "Camera updated." : "Camera added.", "good");
+      location.reload();
+    } catch (err) { toast(err.message, "bad"); e.target.disabled = false; }
+  });
+
+  $("#quickLocal")?.addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    try {
+      await api("/api/cameras", {
+        method: "POST",
+        body: JSON.stringify({ name: "Built-in webcam", source: "0", location: "This computer" }),
+      });
+      location.reload();
+    } catch (err) { toast(err.message, "bad"); e.target.disabled = false; }
+  });
+
+  $$("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+    const row = b.closest("[data-cam]");
+    if (!confirm("Remove this camera? Past alerts from it are kept.")) return;
+    try {
+      await api(`/api/cameras/${row.dataset.cam}`, { method: "DELETE" });
+      row.remove();
+      toast("Camera removed.");
+    } catch (err) { toast(err.message, "bad"); }
+  }));
+
+  $$("[data-toggle]").forEach((b) => b.addEventListener("click", async () => {
+    const row = b.closest("[data-cam]");
+    const next = b.dataset.enabled !== "1";
+    try {
+      await api(`/api/cameras/${row.dataset.cam}/toggle`, {
+        method: "POST", body: JSON.stringify({ enabled: next }),
+      });
+      b.dataset.enabled = next ? "1" : "0";
+      b.textContent = next ? "Pause" : "Resume";
+    } catch (err) { toast(err.message, "bad"); }
+  }));
+
+  window.addEventListener("fw:state", (e) => {
+    $("#camCount") && ($("#camCount").textContent = `${e.detail.total} configured`);
+    e.detail.cameras.forEach((c) => {
+      const row = document.querySelector(`tr[data-cam="${c.id}"]`);
+      if (!row) return;
+      row.querySelector("[data-dot]").className = `dot dot--${c.status}`;
+      row.querySelector("[data-status]").textContent =
+        c.status === "online" ? `online · ${c.fps} fps` : c.status;
+      row.querySelector("[data-err]").textContent = c.error || "";
+      row.querySelector("[data-risk]").textContent = two(c.risk);
+    });
+  });
+})();
+</script>
+{% endblock %}

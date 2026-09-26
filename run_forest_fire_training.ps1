@@ -3,10 +3,10 @@ $projectRoot = $PSScriptRoot
 $python = Join-Path $projectRoot '.venv\Scripts\python.exe'
 Set-Location $projectRoot
 
-& $python (Join-Path $projectRoot 'prepare_forest_fire_dataset.py') --overwrite
+& $python (Join-Path $projectRoot 'prepare_forest_fire_dataset.py') --overwrite --neg-train 20000 --neg-val 1500 --neg-test 1500
 if ($LASTEXITCODE -ne 0) { throw "Dataset preparation failed with exit code $LASTEXITCODE." }
 
-& $python (Join-Path $projectRoot 'train_forest_fire_detector.py') --epochs 40 --batch 8 --device 0
+& $python (Join-Path $projectRoot 'train_forest_fire_detector.py') --epochs 60 --batch 16 --device 0 --optimizer AdamW
 if ($LASTEXITCODE -ne 0) { throw "Training failed with exit code $LASTEXITCODE." }
 
 & $python (Join-Path $projectRoot 'evaluate_forest_fire_detector.py') --device 0

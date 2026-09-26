@@ -28,7 +28,7 @@ from ultralytics import YOLO
 # Configuration
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-RGB_WEIGHTS = BASE_DIR / "runs" / "forest_fire" / "fire_smoke" / "weights" / "best.pt"
+RGB_WEIGHTS = BASE_DIR / "runs" / "forest_fire" / "fasdd_real_smoke_30ep" / "weights" / "best.pt"
 # Optional dedicated models (set to None to fall back to the RGB model).
 THERMAL_WEIGHTS: Optional[Path] = None
 NIR_WEIGHTS: Optional[Path] = None

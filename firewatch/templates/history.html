@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}History — FireWatch{% endblock %}
+
+{% block body %}
+{% set day_max = (stats.by_day | map(attribute='n') | max) if stats.by_day else 1 %}
+{% set cam_max = (stats.by_camera | map(attribute='n') | max) if stats.by_camera else 1 %}
+
+<div class="page__head">
+  <div>
+    <h1>History</h1>
+    <p>Every detection and what was decided about it, over the last seven days.</p>
+  </div>
+</div>
+
+<div class="stats" style="margin-bottom:14px">
+  <div class="stat">
+    <span class="stat__n readout">{{ counts.total }}</span>
+    <span class="stat__k">Detections</span>
+  </div>
+  <div class="stat">
+    <span class="stat__n readout v-fire">{{ counts.dispatched }}</span>
+    <span class="stat__k">Teams dispatched</span>
+  </div>
+  <div class="stat">
+    <span class="stat__n readout v-flame_no_heat">{{ counts.dismissed }}</span>
+    <span class="stat__k">False alarms</span>
+  </div>
+  <div class="stat">
+    <span class="stat__n readout">
+      {%- set decided = counts.dispatched + counts.dismissed -%}
+      {{ '%d%%'|format(100 * counts.dispatched / decided) if decided else '—' }}
+    </span>
+    <span class="stat__k">Turned out real</span>
+  </div>
+  <div class="stat">
+    <span class="stat__n readout {{ 'v-heat_no_flame' if counts.pending else '' }}">{{ counts.pending }}</span>
+    <span class="stat__k">Still waiting</span>
+  </div>
+</div>
+
+<div class="grid-2" style="align-items:start;margin-bottom:14px">
+  <section class="panel">
+    <div class="panel__head">
+      <h2>By day</h2>
+      <div class="legend">
+        <span><i style="background:var(--ember)"></i>dispatched</span>
+        <span><i style="background:rgba(108,123,255,.55)"></i>false alarm</span>
+        <span><i style="background:rgba(255,194,75,.75)"></i>waiting</span>
+      </div>
+    </div>
+    <div class="panel__body">
+      {% if stats.by_day %}
+      <div class="spark">
+        {% for d in stats.by_day %}
+        {% set waiting = d.n - d.dispatched - d.dismissed %}
+        <div class="spark__col">
+          <div class="spark__stack" title="{{ d.d }}: {{ d.n }} detections">
+            {% if d.dispatched %}
+            <div class="spark__seg spark__seg--d"
+                 style="height:{{ (100 * d.dispatched / day_max)|round(1) }}%"></div>{% endif %}
+            {% if d.dismissed %}
+            <div class="spark__seg spark__seg--x"
+                 style="height:{{ (100 * d.dismissed / day_max)|round(1) }}%"></div>{% endif %}
+            {% if waiting > 0 %}
+            <div class="spark__seg spark__seg--p"
+                 style="height:{{ (100 * waiting / day_max)|round(1) }}%"></div>{% endif %}
+          </div>
+          <span class="spark__k">{{ d.d[-2:] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="dim" style="margin:0">No detections yet this week.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel__head"><h2>By camera</h2></div>
+    <div class="panel__body">
+      {% if stats.by_camera %}
+      <div class="bars">
+        {% for c in stats.by_camera %}
+        <div class="bar">
+          <span class="bar__k" title="{{ c.cam }}">{{ c.cam }}</span>
+          <span class="bar__track">
+            <span class="bar__fill" style="--v:{{ (c.n / cam_max)|round(3) }}"></span>
+          </span>
+          <span class="bar__n mono">{{ c.n }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="dim" style="margin:0">Nothing recorded yet.</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel__head">
+    <h2>Event log</h2>
+    <div class="row" style="gap:5px">
+      {% for key, label in [('all','All'), ('pending','Waiting'),
+                            ('dispatched','Dispatched'), ('dismissed','False alarms')] %}
+      <button class="btn btn--sm btn--ghost" data-filter="{{ key }}" type="button">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if events %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Time</th><th>Camera</th><th>Verdict</th>
+        <th class="num">Visible</th><th class="num">Thermal</th><th class="num">Fused</th>
+        <th>Outcome</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in events %}
+      <tr data-status="{{ e.status }}">
+        <td class="mono tiny">{{ e.ts|stamp }}</td>
+        <td>
+          {{ e.camera_name }}
+          {% if e.location %}<div class="tiny dimmer">{{ e.location }}</div>{% endif %}
+        </td>
+        <td class="v-{{ e.verdict }}" style="font-weight:620">{{ e.label }}</td>
+        <td class="num">{{ '%.2f'|format(e.rgb_score) if e.rgb_score is not none else '—' }}</td>
+        <td class="num">{{ '%.2f'|format(e.thermal_score) if e.thermal_score is not none else '—' }}</td>
+        <td class="num" style="font-weight:680">{{ '%.2f'|format(e.fused_score or 0) }}</td>
+        <td>
+          {% if e.status == 'pending' %}
+            <a href="/review" class="tag v-heat_no_flame">Waiting</a>
+          {% elif e.status == 'dispatched' %}
+            <span class="tag v-fire">Dispatched</span>
+          {% else %}
+            <span class="tag v-flame_no_heat">False alarm</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="panel__body">
+    <p class="dim" style="margin:0">No events recorded yet. Detections from the live
+       wall and from the classifier both land here.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const { $$ } = window.FireWatch;
+  let current = "all";
+
+  function apply() {
+    $$("tr[data-status]").forEach((tr) => {
+      tr.hidden = current !== "all" && tr.dataset.status !== current;
+    });
+    $$("[data-filter]").forEach((b) =>
+      b.classList.toggle("btn--primary", b.dataset.filter === current));
+  }
+
+  $$("[data-filter]").forEach((b) => b.addEventListener("click", () => {
+    current = b.dataset.filter; apply();
+  }));
+  apply();
+})();
+</script>
+{% endblock %}

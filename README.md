@@ -21,6 +21,14 @@ python train_forest_fire_detector.py --epochs 40 --batch 8 --device 0
 python evaluate_forest_fire_detector.py --device 0
 ```
 
+To watch training progress in a separate PowerShell terminal:
+
+```powershell
+python monitor_training_status.py
+```
+
+Use `python monitor_training_status.py --once` for a single update. The monitor refreshes every 10 seconds and reports whether the run is still running, the completed epoch count, and the latest metrics.
+
 The training classes are `fire` and `smoke`. The builder excludes unrelated FLIR person labels, retains valid negative images, and removes byte-identical duplicates across splits to prevent leakage. It writes split/class counts to `artifacts/forest_fire_yolo/dataset_summary.json`.
 
 The evaluation script reports object-detection metrics (precision, recall, mAP) and binary fire-alert metrics (accuracy, precision, recall, F1, and confusion matrix) on the held-out test split.
@@ -44,3 +52,46 @@ The phone and computer must be on the same network. RTSP URLs and a local webcam
 The live pipeline detects fire, smoke, and people. A fire plus a person in the same frame is reported as a co-occurrence, not proof that the person started the fire.
 
 This can report a person near a detected fire. It cannot determine whether a person intentionally started a fire because the supplied datasets have no intent labels. `Images`/`Masks` is retained for a future fire-boundary segmentation stage rather than mixing masks into bounding-box training.
+
+## FireWatch web application
+
+Run the connected-camera dashboard from the repository root:
+
+```powershell
+Set-Location .\firewatch
+..\.venv\Scripts\python.exe .\app.py
+```
+
+Open `http://127.0.0.1:5000`. The RGB detector loads
+`runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt`; the thermal
+fire/no-fire classifier loads `runs/forest_fire/thermal_fire/weights/best.pt`.
+The classifier page includes three curated RGB/thermal demo pairs. Matching NIR
+images are retained with those capture sets for the multimodal demo assets.
+
+## Repository layout
+
+### Frontend
+
+- `firewatch/templates/` - FireWatch pages (live wall, cameras, classifier, alerts, history)
+- `firewatch/static/css/app.css` - FireWatch styling
+- `firewatch/static/js/core.js` - browser-side camera/status interactions
+- `webapp/templates/` - secondary multimodal web interface
+- `webapp/static/` - secondary interface CSS and JavaScript
+
+### Backend and AI
+
+- `firewatch/app.py`, `firewatch/core/` - Flask routes, cameras, RGB/thermal inference, fusion, SQLite event store
+- `webapp/app.py`, `webapp/multimodal_detector.py` - secondary Flask API and modality inference
+- `train_forest_fire_detector.py`, `train_thermal_classifier.py` - model training
+- `infer_video.py`, `evaluate_forest_fire_detector.py` - video inference and evaluation
+- `prepare_*.py`, `audit_*.py`, `build_clean_candidate_splits.py` - dataset preparation and audit utilities
+- `runs/forest_fire/.../weights/best.pt` - included trained inference checkpoints
+
+## Data and runtime files
+
+Large source datasets, generated audit/training outputs, the Python virtual
+environment, camera snapshots, and the local FireWatch SQLite database are not
+stored in this Git repository. Obtain the datasets separately before running
+the preparation or retraining scripts. Curated demo captures and trained
+inference checkpoints are included because the website needs them to reproduce
+the demo and load its models.

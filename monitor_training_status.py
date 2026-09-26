@@ -28,6 +28,14 @@ def get_epochs(run_dir: Path) -> int:
     return 40
 
 
+def is_training_active(run_dir: Path, rows: list[dict[str, str]]) -> bool:
+    if not rows:
+        return True
+    last_epoch = int(float(rows[-1].get("epoch", "-1")))
+    total_epochs = get_epochs(run_dir)
+    return last_epoch < total_epochs
+
+
 def metric(row: dict[str, str], name: str) -> float:
     return float(row.get(name, "0") or 0)
 
@@ -75,10 +83,14 @@ def render(root: Path) -> None:
         return
     row = rows[-1]
     epochs = get_epochs(run_dir)
-    completed = int(float(row["epoch"]))
+    completed = min(epochs, int(float(row["epoch"])))
+    state = "RUNNING" if is_training_active(run_dir, rows) else "COMPLETED"
+    current_epoch = int(float(row["epoch"]))
     print("Forest-fire training status")
     print(f"Run: {run_dir.relative_to(root)}")
+    print(f"State: {state}")
     print(f"Completed: {completed}/{epochs} epochs ({completed / epochs:.0%})")
+    print(f"Latest recorded epoch: {current_epoch}")
     print(f"Precision: {metric(row, 'metrics/precision(B)'):.1%} | Recall: {metric(row, 'metrics/recall(B)'):.1%}")
     print(f"mAP@50: {metric(row, 'metrics/mAP50(B)'):.1%} | mAP@50-95: {metric(row, 'metrics/mAP50-95(B)'):.1%}")
     print(projection(rows, epochs))

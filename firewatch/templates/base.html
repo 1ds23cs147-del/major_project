@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FireWatch{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">FIRE<span>WATCH</span></a>
+    <nav class="tabs" aria-label="Main navigation">
+      {% for item in nav %}<a class="tab {% if active == item.slug %}is-active{% endif %}" href="{{ item.url }}">{{ item.label }}</a>{% endfor %}
+    </nav>
+    <div class="top-status"><i></i><span id="systemText">SYSTEM STANDBY</span><b id="clock">--:--:--</b></div>
+  </header>
+  {% if not cv_ok %}<div class="notice">OpenCV is not installed, so camera feeds and image analysis are disabled.</div>{% endif %}
+  <main class="shell">{% block body %}{% endblock %}</main>
+  <div class="toast-stack" id="toasts"></div>
+  <script src="{{ url_for('static', filename='js/core.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

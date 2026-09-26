@@ -8,7 +8,26 @@ __pycache__/
 
 # Large local source datasets are not versioned with the application code.
 original datasets/
+datasets/
 
 # Uploaded scene captures are runtime data, not source code.
 webapp/uploads/
 webapp/snapshots/
+
+# FireWatch runtime state and captured evidence are local data.
+firewatch/firewatch.db
+firewatch/static/snapshots/
+droidcam_current.jpg
+
+# Keep only the curated, matched demo captures in the repository.
+!webapp/uploads/
+webapp/uploads/*
+!webapp/uploads/cap_1788092699954_62u3d0_rgb.jpg
+!webapp/uploads/cap_1788092699954_62u3d0_thermal.jpg
+!webapp/uploads/cap_1788092699954_62u3d0_nir.jpg
+!webapp/uploads/cap_1788093931850_3jinv5_rgb.jpg
+!webapp/uploads/cap_1788093931850_3jinv5_thermal.jpg
+!webapp/uploads/cap_1788093931850_3jinv5_nir.jpg
+!webapp/uploads/test_cap_1_rgb.jpg
+!webapp/uploads/test_cap_1_thermal.jpg
+!webapp/uploads/test_cap_1_nir.jpg

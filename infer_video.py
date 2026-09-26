@@ -10,7 +10,7 @@ from ultralytics import YOLO
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the forest-camera fire/smoke alert detector on a video.")
     parser.add_argument("video", help="Video path, webcam index such as 0, or an IP Webcam/RTSP URL")
-    parser.add_argument("--weights", type=Path, default=Path("runs/forest_fire/fire_smoke/weights/best.pt"))
+    parser.add_argument("--weights", type=Path, default=Path("runs/forest_fire/fasdd_real_smoke_30ep/weights/best.pt"))
     parser.add_argument("--output", type=Path, default=Path("artifacts/video_predictions.mp4"))
     parser.add_argument("--conf", type=float, default=0.40, help="Detection confidence threshold.")
     parser.add_argument("--sample-seconds", type=float, default=10.0, help="Run detection once per this many seconds; 0 processes every frame.")
